@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="hud_green">#FF00E676</color>
+    <color name="hud_yellow">#FFFFEB3B</color>
+    <color name="hud_red">#FFFF1744</color>
+    <color name="hud_white">#FFFFFFFF</color>
+    <color name="hud_dim">#FF9E9E9E</color>
+    <color name="hud_bg">#FF000000</color>
+</resources>

@@ -16,7 +16,8 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-monitor](#glass-monitor) | Desktop screen capture → MJPEG stream | WiFi/USB | Standalone Python server |
 | [glass-pomodoro](#glass-pomodoro) | Pomodoro timer (15min work / 5min break) | None | No |
 | [glass-stream](#glass-stream) | Camera MJPEG streaming server | WiFi/USB | Optional - Python viewer & shell scripts |
-| [glass-term](#glass-term) | Terminal emulator with Dvorak keyboard | None | No |
+| [glass-term](#glass-term) | Terminal emulator with SSH client & favorites | None | No |
+| [glass-vnc](#glass-vnc) | VNC remote desktop viewer with zoom modes | WiFi/USB | No (connects to any VNC server) |
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
 
 ---
@@ -170,9 +171,9 @@ python glass_viewer.py <glass-ip> [port]
 
 ## glass-term
 
-Terminal emulator for Glass with USB keyboard support. Spawns `/system/bin/sh` and provides a VT100-compatible display with local echo, scrollback, and QWERTY-to-Dvorak keyboard remapping.
+Terminal emulator for Glass with USB keyboard support. Spawns `/system/bin/sh` and provides a VT100-compatible display with local echo, scrollback, and QWERTY-to-Dvorak keyboard remapping. Includes a bundled SSH client (Dropbear `dbclient`) with quick-connect favorites.
 
-**Permissions:** None
+**Permissions:** None (SSH requires network access from the shell)
 
 ### Features
 
@@ -180,16 +181,68 @@ Terminal emulator for Glass with USB keyboard support. Spawns `/system/bin/sh` a
 - VT100/ANSI terminal emulation (cursor movement, colors, erase, scroll regions)
 - 16-color and 256-color ANSI palette
 - Local echo and line editing (no PTY)
-- QWERTY → Dvorak keyboard translation
+- QWERTY and Dvorak keyboard layouts (Ctrl+K to toggle, persisted)
 - 500-line scrollback buffer (Shift+PgUp/PgDn)
 - Ctrl+C (interrupt), Ctrl+D (EOF), Ctrl+L (clear screen)
 - Cursor blink, backspace, tab
+
+### SSH Client & Favorites
+
+A static ARM Dropbear `dbclient` binary is bundled in the APK and extracted on first launch. Five SSH favorite slots are shown in a bar at the bottom of the screen.
+
+**Keyboard shortcuts:** Ctrl+1 through Ctrl+5 to connect to the corresponding favorite.
+
+**Configuring favorites** via adb intent extras (persisted in SharedPreferences):
+
+```bash
+adb shell "am start -n com.example.glassterm/.TerminalActivity \
+  --es ssh_fav_0 'mypc|user|192.168.0.100|22' \
+  --es ssh_fav_1 'server|root|10.0.0.1|22'"
+```
+
+Format: `name|user|host|port`
+
+**Note:** The bundled Dropbear client supports public-key authentication only. Use `dropbearkey` to generate keys or convert existing OpenSSH keys.
 
 **Gestures:** Swipe down on Glass touchpad to exit.
 
 **Limitation:** Without a PTY, interactive programs like `vi`, `less`, and `top` won't work. Standard commands (`ls`, `cd`, `cat`, `echo`, `ps`, `grep`, etc.) all work fine.
 
-No network or companion required.
+No companion required — SSH connects directly from Glass over WiFi.
+
+---
+
+## glass-vnc
+
+VNC (Remote Framebuffer) viewer for Glass. Connects to any VNC server using the RFB protocol and renders the remote desktop fullscreen. Supports no-auth and VNC password authentication. Four zoom modes let you trade off between seeing the full desktop or readable detail.
+
+**Permissions:** `INTERNET`, `WAKE_LOCK`
+
+### Zoom Modes
+
+| Mode | Source Crop | Effect |
+|------|-----------|--------|
+| `full` | Entire desktop | Scale whole screen to 640x360 |
+| `quarter` | 640x360 | 1:1 pixel crop (no scaling) |
+| `half` | 960x540 | Crop scaled down to 640x360 |
+| `zoom` | 1280x720 | Crop scaled down to 640x360 |
+
+### Usage
+
+```bash
+# Basic — connect to VNC server on default port 5900
+adb shell am start -n com.glassvnc/.MainActivity --es host 192.168.1.100
+
+# With password and initial zoom mode
+adb shell am start -n com.glassvnc/.MainActivity --es host 192.168.1.100 --es password secret --es mode zoom
+
+# Custom port
+adb shell am start -n com.glassvnc/.MainActivity --es host 192.168.1.100 --ei port 5901
+```
+
+**Controls:** Tap to cycle zoom mode. Swipe down, long-press, or back to exit. Connection settings and zoom mode persist across launches.
+
+No companion required — connects directly to any standard VNC server.
 
 ---
 

@@ -31,8 +31,14 @@ public class TerminalView extends View {
 
     private int scrollOffset = 0;
 
-    // Debug: last key event info shown on screen
-    private String debugKeyInfo = "No keys yet";
+    // SSH favorites bar
+    private SshFavorite[] favorites;
+    private int flashSlot = -1;
+    private boolean flashSuccess = false;
+    private final Handler flashHandler = new Handler();
+
+    // Keyboard layout indicator
+    private boolean dvorakMode = false;
 
     public TerminalView(Context context) {
         super(context);
@@ -84,9 +90,28 @@ public class TerminalView extends View {
         scrollOffset = 0;
     }
 
-    public void setDebugKeyInfo(String info) {
-        debugKeyInfo = info;
+    public void setFavorites(SshFavorite[] favorites) {
+        this.favorites = favorites;
         postInvalidate();
+    }
+
+    public void setKeyboardLayout(boolean dvorak) {
+        this.dvorakMode = dvorak;
+        postInvalidate();
+    }
+
+    public void flashSlot(int slot, boolean success) {
+        flashSlot = slot;
+        flashSuccess = success;
+        postInvalidate();
+        flashHandler.removeCallbacksAndMessages(null);
+        flashHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                flashSlot = -1;
+                postInvalidate();
+            }
+        }, 300);
     }
 
     @Override
@@ -169,15 +194,44 @@ public class TerminalView extends View {
             }
         }
 
-        // Debug: draw key info bar at bottom
-        if (debugKeyInfo != null) {
+        // SSH favorites bar at bottom
+        if (favorites != null) {
             bgPaint.setColor(0xFF333333);
             float barY = getHeight() - cellHeight;
             canvas.drawRect(0, barY, getWidth(), getHeight(), bgPaint);
-            textPaint.setColor(0xFFFFFF00);
+
             textPaint.setFakeBoldText(false);
             textPaint.setUnderlineText(false);
-            canvas.drawText(debugKeyInfo, 4, barY + textBaseline, textPaint);
+
+            float slotWidth = (float) getWidth() / 5;
+            for (int i = 0; i < 5; i++) {
+                SshFavorite fav = (i < favorites.length) ? favorites[i] : null;
+                boolean active = fav != null && !fav.isEmpty();
+                String label;
+                if (active) {
+                    label = (i + 1) + ":" + fav.name;
+                } else {
+                    label = (i + 1) + ":     ";
+                }
+
+                // Pick color: flash overrides normal color
+                if (i == flashSlot) {
+                    textPaint.setColor(flashSuccess ? 0xFF00FF00 : 0xFFFF4444);
+                } else if (active) {
+                    textPaint.setColor(0xFF00FFFF);
+                } else {
+                    textPaint.setColor(0xFF666666);
+                }
+
+                float x = i * slotWidth + 4;
+                canvas.drawText(label, x, barY + textBaseline, textPaint);
+            }
+
+            // Keyboard layout indicator at far right
+            String layoutLabel = dvorakMode ? "DVK" : "QWE";
+            textPaint.setColor(0xFFFFFF00);
+            float labelWidth = textPaint.measureText(layoutLabel);
+            canvas.drawText(layoutLabel, getWidth() - labelWidth - 4, barY + textBaseline, textPaint);
         }
     }
 }

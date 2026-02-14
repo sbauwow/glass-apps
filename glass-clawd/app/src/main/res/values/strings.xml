@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glass Clawd</string>
+    <string name="voice_hint">Tap to speak</string>
+    <string name="listening">Listening…</string>
+</resources>

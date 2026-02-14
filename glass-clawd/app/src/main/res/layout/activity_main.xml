@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <WebView
+        android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Transparent overlay to intercept all touch events before WebView -->
+    <View
+        android:id="@+id/touch_interceptor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Voice input indicator (bottom-right) -->
+    <TextView
+        android:id="@+id/voice_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_margin="8dp"
+        android:background="@drawable/bg_voice_button"
+        android:padding="8dp"
+        android:text="MIC"
+        android:textColor="#D97757"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+</FrameLayout>

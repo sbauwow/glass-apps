@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glass Launcher</string>
+    <string name="accessibility_service_description">Intercepts the camera button to perform a configurable action instead of launching the camera.</string>
+    <string name="no_apps">No launchable apps found</string>
+    <string name="home_button_label">Home</string>
+</resources>

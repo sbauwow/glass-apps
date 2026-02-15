@@ -10,7 +10,6 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 
 | App | Description | Network | Companion Required |
 |-----|-------------|---------|-------------------|
-| [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy server |
 | [glass-display](#glass-display) | Fullscreen MJPEG stream viewer | WiFi/USB | No (connects to any MJPEG source) |
 | [glass-launcher](#glass-launcher) | Custom home screen with gesture navigation | None | No |
 | [glass-monitor](#glass-monitor) | Desktop screen capture → MJPEG stream | WiFi/USB | Standalone Python server |
@@ -19,31 +18,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-term](#glass-term) | Terminal emulator with SSH client & favorites | None | No |
 | [glass-vnc](#glass-vnc) | VNC remote desktop viewer with zoom modes | WiFi/USB | No (connects to any VNC server) |
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
-
----
-
-## glass-clawd
-
-Voice assistant client for Claude AI on Glass. Uses a WebView chat interface with native Android speech recognition. Press the camera button, tap the touchpad, or press D-pad center to speak — your voice is transcribed and sent to Claude via a proxy server. Auto-detects when Claude responds and re-opens the mic for continuous conversation.
-
-**Permissions:** `INTERNET`, `RECORD_AUDIO`
-
-### Companion Server (Required)
-
-The app connects to a Python HTTP proxy server that relays messages to the Anthropic API.
-
-```bash
-cd glass-clawd/server
-ANTHROPIC_API_KEY=sk-... python3 server.py --host 0.0.0.0 --port 8080
-```
-
-**Endpoints:**
-- `GET /` — Chat web UI
-- `GET /history` — Conversation history (JSON)
-- `POST /chat` — Send a message to Claude
-- `POST /clear` — Reset conversation
-
-**Note:** The server IP is hardcoded in `MainActivity.java` as `http://192.168.0.196:8080/`. Update this to match your host machine's IP.
+| [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client (WIP) | WiFi/USB | Yes - Python proxy server |
 
 ---
 
@@ -282,6 +257,33 @@ Cell full: 4.2V / Cell empty: 3.0V
 ```
 
 No companion required — connects directly to the VESC BLE dongle.
+
+---
+
+## glass-clawd (WIP)
+
+Voice assistant client for Claude AI on Glass. Uses a WebView chat interface with native Android speech recognition. Press the camera button, tap the touchpad, or press D-pad center to speak — your voice is transcribed and sent to Claude via a proxy server. Auto-detects when Claude responds and re-opens the mic for continuous conversation.
+
+**Status:** Work in progress — functional but under active development.
+
+**Permissions:** `INTERNET`, `RECORD_AUDIO`
+
+### Companion Server (Required)
+
+The app connects to a Python HTTP proxy server that relays messages to the Anthropic API.
+
+```bash
+cd glass-clawd/server
+ANTHROPIC_API_KEY=sk-... python3 server.py --host 0.0.0.0 --port 8080
+```
+
+**Endpoints:**
+- `GET /` — Chat web UI
+- `GET /history` — Conversation history (JSON)
+- `POST /chat` — Send a message to Claude
+- `POST /clear` — Reset conversation
+
+**Note:** The server IP is hardcoded in `MainActivity.java` as `http://192.168.0.196:8080/`. Update this to match your host machine's IP.
 
 ---
 

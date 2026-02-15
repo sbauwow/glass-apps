@@ -11,6 +11,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | App | Description | Network | Companion Required |
 |-----|-------------|---------|-------------------|
 | [glass-display](#glass-display) | Fullscreen MJPEG stream viewer | WiFi/USB | No (connects to any MJPEG source) |
+| [glass-kill](#glass-kill) | Kill all non-essential background processes | None | No |
 | [glass-launcher](#glass-launcher) | Custom home screen with gesture navigation | None | No |
 | [glass-monitor](#glass-monitor) | Desktop screen capture → MJPEG stream | WiFi/USB | Standalone Python server |
 | [glass-pomodoro](#glass-pomodoro) | Pomodoro timer (15min work / 5min break) | None | No |
@@ -40,6 +41,22 @@ adb shell am start -n com.glassdisplay/.MainActivity --es host 192.168.1.100
 ```
 
 **Gestures:** Swipe down, long-press, or right-click to exit. Default port is 8080.
+
+---
+
+## glass-kill
+
+Quick utility that kills all non-essential background processes on Glass to free up memory. Launches, kills everything, shows results, and auto-exits after 3 seconds.
+
+**Permissions:** `KILL_BACKGROUND_PROCESSES`
+
+Uses both `killBackgroundProcesses()` (API) and `am force-stop` (shell) for thorough cleanup. Protects Android system, Google services, Glass system apps, and the custom launcher.
+
+```bash
+adb shell am start -n com.glasskill/.MainActivity
+```
+
+No network or companion required.
 
 ---
 

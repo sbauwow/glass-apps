@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    android:padding="16dp">
+
+    <!-- Loading / status text (centered, shown while getting location) -->
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="Getting location..."
+        android:textColor="@color/dim_grey"
+        android:textSize="24sp"
+        android:fontFamily="sans-serif-light"
+        android:visibility="visible" />
+
+    <!-- Main weather content (hidden until data loads) -->
+    <LinearLayout
+        android:id="@+id/weatherContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Current conditions row -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+
+            <!-- Large temperature -->
+            <TextView
+                android:id="@+id/currentTemp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:text="--°"
+                android:textColor="@color/white"
+                android:textSize="72sp"
+                android:fontFamily="sans-serif-thin"
+                android:includeFontPadding="false" />
+
+            <!-- Condition text (top right) -->
+            <TextView
+                android:id="@+id/currentCondition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginTop="8dp"
+                android:text="--"
+                android:textColor="@color/white"
+                android:textSize="28sp"
+                android:fontFamily="sans-serif-light" />
+
+            <!-- Location name (below condition) -->
+            <TextView
+                android:id="@+id/locationName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_below="@id/currentCondition"
+                android:layout_marginTop="2dp"
+                android:text=""
+                android:textColor="@color/dim_grey"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-light" />
+
+            <!-- Wind + Humidity (below temperature) -->
+            <TextView
+                android:id="@+id/currentDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="4dp"
+                android:text="Wind -- mph   Humidity --%"
+                android:textColor="@color/dim_grey"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-light" />
+
+        </RelativeLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/dim_grey"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Hourly forecast -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+
+            <LinearLayout
+                android:id="@+id/hourlyContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
+
+</RelativeLayout>

@@ -18,6 +18,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-stream](#glass-stream) | Camera MJPEG streaming server | WiFi/USB | Optional - Python viewer & shell scripts |
 | [glass-term](#glass-term) | Terminal emulator with SSH client & favorites | None | No |
 | [glass-vnc](#glass-vnc) | VNC remote desktop viewer with zoom modes | WiFi/USB | No (connects to any VNC server) |
+| [glass-weather](#glass-weather) | Current conditions & hourly forecast via Open-Meteo | WiFi/USB | No |
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
 | [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
 
@@ -307,6 +308,30 @@ python server.py --model small      # or: tiny, base, small, medium
 - `POST /clear` — Reset conversation
 
 **Note:** The server IP is hardcoded in `MainActivity.java`. Update it to match your host machine's IP.
+
+---
+
+## glass-weather
+
+Current weather conditions and hourly forecast for Glass. Uses the free [Open-Meteo](https://open-meteo.com/) API — no API key needed. Displays large current temperature, condition, wind speed, humidity, and a horizontally scrollable hourly forecast.
+
+**Permissions:** `INTERNET`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `WAKE_LOCK`
+
+### Usage
+
+```bash
+# Launch with default location (Liberty Hill, TX)
+adb shell am start -n com.glassweather/.MainActivity
+
+# Launch with custom coordinates
+adb shell am start -n com.glassweather/.MainActivity --ef lat 40.7128 --ef lon -74.0060
+```
+
+**Controls:** Tap to refresh. Swipe down or long-press to exit.
+
+Auto-refreshes every 15 minutes. Falls back to a hardcoded default location when GPS is unavailable (typical on Glass).
+
+No companion required.
 
 ---
 

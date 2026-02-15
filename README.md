@@ -320,7 +320,7 @@ Current weather conditions and hourly forecast for Glass. Uses the free [Open-Me
 ### Usage
 
 ```bash
-# Launch with default location (Liberty Hill, TX)
+# Launch with default location (Albuquerque, NM)
 adb shell am start -n com.glassweather/.MainActivity
 
 # Launch with custom coordinates

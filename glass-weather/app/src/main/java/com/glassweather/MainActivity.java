@@ -40,9 +40,9 @@ public class MainActivity extends Activity {
     private static final String TAG = "GlassWeather";
     private static final long REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
-    private static final String DEFAULT_LOCATION_NAME = "Liberty Hill, TX";
-    private static final double DEFAULT_LAT = 30.6644;
-    private static final double DEFAULT_LON = -97.9253;
+    private static final String DEFAULT_LOCATION_NAME = "Albuquerque, NM";
+    private static final double DEFAULT_LAT = 35.0844;
+    private static final double DEFAULT_LON = -106.6504;
 
     private TextView statusText;
     private View weatherContent;

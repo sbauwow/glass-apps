@@ -7,7 +7,7 @@ Weather app for Google Glass Explorer Edition. Shows current conditions and hour
 - Current temperature (large thin font), condition, wind speed, humidity
 - Hourly forecast in a horizontally scrollable row
 - Auto-refresh every 15 minutes
-- Default location: Liberty Hill, TX (no GPS required)
+- Default location: Albuquerque, NM (no GPS required)
 - Override location via intent extras
 
 ## Usage
@@ -38,5 +38,5 @@ Uses [Open-Meteo](https://open-meteo.com/) — free, no API key needed. Returns 
 ## Notes
 
 - Glass has outdated CA certificates, so SSL verification is bypassed for the API call
-- GPS/network location providers are typically unavailable on Glass; the app falls back to a hardcoded default location (Liberty Hill, TX)
+- GPS/network location providers are typically unavailable on Glass; the app falls back to a hardcoded default location (Albuquerque, NM)
 - To change the default location, edit `DEFAULT_LAT`, `DEFAULT_LON`, and `DEFAULT_LOCATION_NAME` in `MainActivity.java`

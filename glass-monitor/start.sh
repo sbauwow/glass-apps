@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start glass-monitor server with cleanup and adb reverse.
+# Start glass-monitor server with cleanup and $ADB reverse.
 # Usage: ./start.sh [mode] [extra args...]
 #   ./start.sh              # default: zoom mode
 #   ./start.sh quarter      # quarter mode
@@ -15,6 +15,14 @@ PORT=8080
 
 MODE="${1:-zoom}"
 shift 2>/dev/null || true
+
+# Auto-detect Glass serial
+GLASS_SERIAL=$(adb devices -l 2>/dev/null | grep 'model:Glass' | awk '{print $1}')
+if [ -n "$GLASS_SERIAL" ]; then
+    ADB="adb -s $GLASS_SERIAL"
+else
+    ADB="adb"
+fi
 
 # --- Cleanup ---
 
@@ -33,15 +41,15 @@ if [ -n "$PID" ]; then
     sleep 1
 fi
 
-# Remove stale adb reverse
-adb reverse --remove tcp:$PORT 2>/dev/null || true
+# Remove stale $ADB reverse
+$ADB reverse --remove tcp:$PORT 2>/dev/null || true
 
 # --- Start ---
 
-if adb reverse tcp:$PORT tcp:$PORT 2>/dev/null; then
-    echo "adb reverse tcp:$PORT set up"
+if $ADB reverse tcp:$PORT tcp:$PORT 2>/dev/null; then
+    echo "$ADB reverse tcp:$PORT set up"
 else
-    echo "adb reverse failed (no device?) — streaming on LAN only"
+    echo "$ADB reverse failed (no device?) — streaming on LAN only"
 fi
 
 echo "Starting glass-monitor (mode: $MODE)..."
@@ -53,7 +61,7 @@ sleep 1
 if kill -0 "$SERVER_PID" 2>/dev/null; then
     echo ""
     echo "Glass monitor running (pid $SERVER_PID, port $PORT, mode $MODE)"
-    echo "Launch on Glass:  adb shell am start -n com.glassdisplay/.MainActivity"
+    echo "Launch on Glass:  $ADB shell am start -n com.glassdisplay/.MainActivity"
     echo "Stop:             kill $SERVER_PID"
     wait "$SERVER_PID"
 else

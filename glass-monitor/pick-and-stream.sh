@@ -21,6 +21,14 @@ YELLOW='\033[1;33m'
 RED='\033[1;31m'
 RESET='\033[0m'
 
+# Auto-detect Glass serial
+GLASS_SERIAL=$(adb devices -l 2>/dev/null | grep 'model:Glass' | awk '{print $1}')
+if [ -n "$GLASS_SERIAL" ]; then
+    ADB="adb -s $GLASS_SERIAL"
+else
+    ADB="adb"
+fi
+
 # --- Cleanup old processes ---
 
 if pgrep -f "glass_monitor.py" > /dev/null 2>&1; then
@@ -36,7 +44,7 @@ if [ -n "$PID" ]; then
     sleep 1
 fi
 
-adb reverse --remove tcp:$PORT 2>/dev/null || true
+$ADB reverse --remove tcp:$PORT 2>/dev/null || true
 
 # --- Pick region ---
 
@@ -66,10 +74,10 @@ echo -e "  ${GREEN}>>> Captured --region $REGION${RESET}"
 # --- Start server ---
 
 echo
-if adb reverse tcp:$PORT tcp:$PORT 2>/dev/null; then
-    echo -e "${GREEN}adb reverse tcp:$PORT set up${RESET}"
+if $ADB reverse tcp:$PORT tcp:$PORT 2>/dev/null; then
+    echo -e "${GREEN}$ADB reverse tcp:$PORT set up${RESET}"
 else
-    echo -e "${YELLOW}adb reverse failed (no device?) — streaming on LAN only${RESET}"
+    echo -e "${YELLOW}$ADB reverse failed (no device?) — streaming on LAN only${RESET}"
 fi
 
 echo -e "${GREEN}Starting glass-monitor with --region $REGION $@${RESET}"
@@ -81,7 +89,7 @@ sleep 1
 if kill -0 "$SERVER_PID" 2>/dev/null; then
     echo ""
     echo -e "${GREEN}Glass monitor running (pid $SERVER_PID, port $PORT)${RESET}"
-    echo "Launch on Glass:  adb shell am start -n com.glassdisplay/.MainActivity"
+    echo "Launch on Glass:  $ADB shell am start -n com.glassdisplay/.MainActivity"
     echo "Stop:             kill $SERVER_PID"
     wait "$SERVER_PID"
 else

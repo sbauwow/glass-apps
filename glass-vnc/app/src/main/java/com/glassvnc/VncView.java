@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -110,7 +111,7 @@ public class VncView extends SurfaceView implements SurfaceHolder.Callback {
                 try {
                     connectAndRender(rfb);
                 } catch (Exception e) {
-                    // connection failed or dropped
+                    Log.e("GlassVNC", "Connection error: " + e.getMessage(), e);
                 }
                 rfb.close();
                 if (!running) break;
@@ -119,21 +120,47 @@ public class VncView extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
 
+        private int[] getViewport(int fbW, int fbH) {
+            // Returns {x, y, w, h} for the region to request from the server
+            int mode = zoomMode;
+            int vw, vh;
+            switch (mode) {
+                case MODE_QUARTER: vw = DISPLAY_W; vh = DISPLAY_H; break;
+                case MODE_HALF:    vw = 960;       vh = 540;       break;
+                case MODE_ZOOM:    vw = 1280;      vh = 720;       break;
+                default:           vw = fbW;       vh = fbH;       break; // MODE_FULL
+            }
+            vw = Math.min(vw, fbW);
+            vh = Math.min(vh, fbH);
+            return new int[]{ 0, 0, vw, vh };
+        }
+
         private void connectAndRender(RfbProto rfb) throws Exception {
+            Log.d("GlassVNC", "Connecting to " + host + ":" + port);
             rfb.connect(host, port);
+            Log.d("GlassVNC", "TCP connected, starting handshake");
             rfb.handshake(password);
+            Log.d("GlassVNC", "Handshake done: " + rfb.desktopWidth + "x" + rfb.desktopHeight + " " + rfb.serverName);
             rfb.setPixelFormat();
             rfb.setEncodings();
 
-            int fbW = rfb.fbWidth;
-            int fbH = rfb.fbHeight;
-            int[] framebuffer = new int[fbW * fbH];
+            int fbW = rfb.desktopWidth;
+            int fbH = rfb.desktopHeight;
 
             notifyState(STATE_CONNECTED);
             notifyDesktopSize(fbW, fbH);
 
-            // Initial full update
-            rfb.requestUpdate(0, 0, fbW, fbH, false);
+            // Request only the viewport region, not the full desktop
+            int[] vp = getViewport(fbW, fbH);
+            int vpW = vp[2], vpH = vp[3];
+            int[] framebuffer = new int[vpW * vpH];
+            // Override fbWidth/fbHeight so readRawRect writes into our viewport buffer
+            rfb.fbWidth = vpW;
+            rfb.fbHeight = vpH;
+            rfb.viewportX = vp[0];
+            rfb.viewportY = vp[1];
+            Log.d("GlassVNC", "Requesting viewport: " + vpW + "x" + vpH);
+            rfb.requestUpdate(vp[0], vp[1], vpW, vpH, false);
 
             long fpsStart = System.currentTimeMillis();
             int frameCount = 0;
@@ -143,21 +170,9 @@ public class VncView extends SurfaceView implements SurfaceHolder.Callback {
 
                 switch (msgType) {
                     case 0: // FramebufferUpdate
-                        int oldW = rfb.fbWidth;
-                        int oldH = rfb.fbHeight;
                         rfb.readFramebufferUpdate(framebuffer);
 
-                        // Handle desktop resize
-                        if (rfb.fbWidth != oldW || rfb.fbHeight != oldH) {
-                            fbW = rfb.fbWidth;
-                            fbH = rfb.fbHeight;
-                            framebuffer = new int[fbW * fbH];
-                            notifyDesktopSize(fbW, fbH);
-                            rfb.requestUpdate(0, 0, fbW, fbH, false);
-                            continue;
-                        }
-
-                        renderFrame(framebuffer, fbW, fbH);
+                        renderFrame(framebuffer, vpW, vpH);
                         frameCount++;
 
                         long now = System.currentTimeMillis();
@@ -167,8 +182,18 @@ public class VncView extends SurfaceView implements SurfaceHolder.Callback {
                             fpsStart = now;
                         }
 
-                        // Request next incremental update
-                        rfb.requestUpdate(0, 0, fbW, fbH, true);
+                        // Check if zoom mode changed — adjust viewport
+                        int[] newVp = getViewport(fbW, fbH);
+                        if (newVp[2] != vpW || newVp[3] != vpH) {
+                            vpW = newVp[2]; vpH = newVp[3];
+                            framebuffer = new int[vpW * vpH];
+                            rfb.fbWidth = vpW;
+                            rfb.fbHeight = vpH;
+                            Log.d("GlassVNC", "Viewport changed: " + vpW + "x" + vpH);
+                            rfb.requestUpdate(newVp[0], newVp[1], vpW, vpH, false);
+                        } else {
+                            rfb.requestUpdate(vp[0], vp[1], vpW, vpH, true);
+                        }
                         break;
 
                     case 1: // SetColourMapEntries
@@ -193,47 +218,9 @@ public class VncView extends SurfaceView implements SurfaceHolder.Callback {
     private void renderFrame(int[] framebuffer, int fbW, int fbH) {
         if (!surfaceReady) return;
 
-        // Determine source crop based on zoom mode
-        int srcX, srcY, srcW, srcH;
-        int mode = zoomMode;
-
-        switch (mode) {
-            case MODE_QUARTER:
-                // 1:1 pixel crop from top-left, 640x360
-                srcW = Math.min(DISPLAY_W, fbW);
-                srcH = Math.min(DISPLAY_H, fbH);
-                srcX = 0;
-                srcY = 0;
-                break;
-            case MODE_HALF:
-                // 960x540 crop from top-left
-                srcW = Math.min(960, fbW);
-                srcH = Math.min(540, fbH);
-                srcX = 0;
-                srcY = 0;
-                break;
-            case MODE_ZOOM:
-                // 1280x720 crop from top-left
-                srcW = Math.min(1280, fbW);
-                srcH = Math.min(720, fbH);
-                srcX = 0;
-                srcY = 0;
-                break;
-            default: // MODE_FULL
-                srcW = fbW;
-                srcH = fbH;
-                srcX = 0;
-                srcY = 0;
-                break;
-        }
-
-        // Create bitmap from the relevant portion
-        Bitmap bmp = Bitmap.createBitmap(srcW, srcH, Bitmap.Config.ARGB_8888);
-        // Copy rows from framebuffer
-        for (int row = 0; row < srcH; row++) {
-            int fbOffset = (srcY + row) * fbW + srcX;
-            bmp.setPixels(framebuffer, fbOffset, fbW, 0, row, srcW, 1);
-        }
+        // Framebuffer is already viewport-sized, just blit it
+        Bitmap bmp = Bitmap.createBitmap(fbW, fbH, Bitmap.Config.ARGB_8888);
+        bmp.setPixels(framebuffer, 0, fbW, 0, 0, fbW, fbH);
 
         SurfaceHolder holder = getHolder();
         Canvas canvas = null;

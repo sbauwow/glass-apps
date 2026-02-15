@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.zip.Inflater;
+import java.util.zip.DataFormatException;
 
 /**
  * Minimal RFB (Remote Framebuffer) protocol client.
@@ -15,14 +17,19 @@ public class RfbProto {
 
     private static final int ENCODING_RAW = 0;
     private static final int ENCODING_COPYRECT = 1;
+    private static final int ENCODING_ZLIB = 6;
     private static final int ENCODING_DESKTOP_SIZE = -223;
+
+    private Inflater zlibInflater;
 
     private Socket socket;
     private DataInputStream in;
     private OutputStream out;
 
-    public int fbWidth;
-    public int fbHeight;
+    public int fbWidth;      // viewport buffer width (set by caller)
+    public int fbHeight;     // viewport buffer height (set by caller)
+    public int desktopWidth; // real server desktop width
+    public int desktopHeight;// real server desktop height
     public String serverName;
     public int bpp;        // bytes per pixel
     public int depth;
@@ -30,12 +37,14 @@ public class RfbProto {
     public boolean trueColor;
     public int redMax, greenMax, blueMax;
     public int redShift, greenShift, blueShift;
+    public int viewportX, viewportY;  // offset for sub-region requests
 
     public void connect(String host, int port) throws IOException {
         socket = new Socket(host, port);
         socket.setTcpNoDelay(true);
-        socket.setSoTimeout(10000);
-        in = new DataInputStream(socket.getInputStream());
+        socket.setSoTimeout(60000);
+        socket.setReceiveBufferSize(256 * 1024);
+        in = new DataInputStream(new java.io.BufferedInputStream(socket.getInputStream(), 256 * 1024));
         out = socket.getOutputStream();
     }
 
@@ -137,8 +146,10 @@ public class RfbProto {
         out.flush();
 
         // ServerInit
-        fbWidth = in.readUnsignedShort();
-        fbHeight = in.readUnsignedShort();
+        desktopWidth = in.readUnsignedShort();
+        desktopHeight = in.readUnsignedShort();
+        fbWidth = desktopWidth;
+        fbHeight = desktopHeight;
 
         // Pixel format (16 bytes)
         bpp = in.readUnsignedByte();           // bits-per-pixel
@@ -246,7 +257,7 @@ public class RfbProto {
      * Tell server which encodings we support.
      */
     public void setEncodings() throws IOException {
-        int[] encodings = { ENCODING_RAW, ENCODING_COPYRECT, ENCODING_DESKTOP_SIZE };
+        int[] encodings = { ENCODING_ZLIB, ENCODING_COPYRECT, ENCODING_RAW, ENCODING_DESKTOP_SIZE };
         ByteBuffer buf = ByteBuffer.allocate(4 + encodings.length * 4);
         buf.order(ByteOrder.BIG_ENDIAN);
         buf.put((byte) 2); // SetEncodings
@@ -298,12 +309,14 @@ public class RfbProto {
             int encoding = in.readInt();
 
             if (encoding == ENCODING_DESKTOP_SIZE) {
-                fbWidth = w;
-                fbHeight = h;
+                desktopWidth = w;
+                desktopHeight = h;
             } else if (encoding == ENCODING_COPYRECT) {
                 int srcX = in.readUnsignedShort();
                 int srcY = in.readUnsignedShort();
                 copyRect(framebuffer, srcX, srcY, x, y, w, h);
+            } else if (encoding == ENCODING_ZLIB) {
+                readZlibRect(framebuffer, x, y, w, h);
             } else if (encoding == ENCODING_RAW) {
                 readRawRect(framebuffer, x, y, w, h);
             } else {
@@ -316,21 +329,66 @@ public class RfbProto {
         // 4 bytes per pixel (we requested 32bpp)
         int rowBytes = w * 4;
         byte[] rowBuf = new byte[rowBytes];
+        // Map server coordinates to local viewport buffer
+        int lx = x - viewportX;
+        int ly = y - viewportY;
 
         for (int row = 0; row < h; row++) {
             in.readFully(rowBuf);
-            int fbY = y + row;
-            if (fbY >= fbHeight) continue;
-            int offset = fbY * fbWidth + x;
+            int fbY = ly + row;
+            if (fbY < 0 || fbY >= fbHeight) continue;
+            int offset = fbY * fbWidth + lx;
             for (int col = 0; col < w; col++) {
-                if (x + col >= fbWidth) continue;
+                int bx = lx + col;
+                if (bx < 0 || bx >= fbWidth) continue;
                 int idx = col * 4;
-                // Server sends pixels as R=shift16, G=shift8, B=shift0 in big-endian
-                // In our 32bpp little-endian format: byte order is B, G, R, A
                 int b = rowBuf[idx] & 0xFF;
                 int g = rowBuf[idx + 1] & 0xFF;
                 int r = rowBuf[idx + 2] & 0xFF;
                 framebuffer[offset + col] = 0xFF000000 | (r << 16) | (g << 8) | b;
+            }
+        }
+    }
+
+    private void readZlibRect(int[] framebuffer, int x, int y, int w, int h) throws IOException {
+        int compressedLen = in.readInt();
+        byte[] compressed = new byte[compressedLen];
+        in.readFully(compressed);
+
+        int rawLen = w * h * 4;
+        byte[] raw = new byte[rawLen];
+
+        if (zlibInflater == null) {
+            zlibInflater = new Inflater();
+        }
+        zlibInflater.setInput(compressed);
+        try {
+            int offset = 0;
+            while (offset < rawLen) {
+                int n = zlibInflater.inflate(raw, offset, rawLen - offset);
+                if (n == 0 && zlibInflater.needsInput()) break;
+                offset += n;
+            }
+        } catch (DataFormatException e) {
+            throw new IOException("Zlib decompression failed", e);
+        }
+
+        // Parse decompressed pixels same as raw
+        int lx = x - viewportX;
+        int ly = y - viewportY;
+        for (int row = 0; row < h; row++) {
+            int fbY = ly + row;
+            if (fbY < 0 || fbY >= fbHeight) continue;
+            int fbOff = fbY * fbWidth + lx;
+            int rawOff = row * w * 4;
+            for (int col = 0; col < w; col++) {
+                int bx = lx + col;
+                if (bx < 0 || bx >= fbWidth) continue;
+                int idx = rawOff + col * 4;
+                int b = raw[idx] & 0xFF;
+                int g = raw[idx + 1] & 0xFF;
+                int r = raw[idx + 2] & 0xFF;
+                framebuffer[fbOff + col] = 0xFF000000 | (r << 16) | (g << 8) | b;
             }
         }
     }

@@ -189,7 +189,7 @@ No companion required — SSH connects directly from Glass over WiFi.
 
 ## glass-vnc
 
-VNC (Remote Framebuffer) viewer for Glass. Connects to any VNC server using the RFB protocol and renders the remote desktop fullscreen. Supports no-auth and VNC password authentication. Four zoom modes let you trade off between seeing the full desktop or readable detail.
+VNC (Remote Framebuffer) viewer for Glass. Connects to any VNC server using the RFB protocol and renders the remote desktop fullscreen. Supports no-auth and VNC password authentication, with Zlib, Raw, and CopyRect encodings. Only requests the viewport region for efficient bandwidth on large displays. Four zoom modes let you trade off between seeing the full desktop or readable detail.
 
 **Permissions:** `INTERNET`, `WAKE_LOCK`
 

@@ -2,7 +2,7 @@
 
 VNC remote desktop viewer for Google Glass Explorer Edition (640x360, AOSP 5.1.1).
 
-Connects to any VNC server using the RFB protocol (versions 3.3, 3.7, 3.8) and renders the remote framebuffer fullscreen on Glass. Supports no-auth and VNC password authentication, with raw and copyrect encodings.
+Connects to any VNC server using the RFB protocol (versions 3.3, 3.7, 3.8) and renders the remote framebuffer fullscreen on Glass. Supports no-auth and VNC password authentication. Encodings: Zlib (preferred), Raw, and CopyRect. Only requests the viewport region from the server, not the full desktop, for efficient bandwidth usage on large displays.
 
 ## Zoom Modes
 
@@ -67,6 +67,9 @@ All settings are saved to SharedPreferences and reused on next launch.
 Any standard VNC server works. Examples:
 
 ```bash
+# TigerVNC x0vncserver (mirror existing X display, recommended)
+x0vncserver -display :0 -SecurityTypes None -rfbport 5900
+
 # x11vnc (mirror existing display)
 x11vnc -display :0 -nopw -forever
 

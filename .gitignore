@@ -1,6 +1,7 @@
 # Build outputs
 build/
 *.apk
+!apks/*.apk
 *.aab
 
 # Gradle

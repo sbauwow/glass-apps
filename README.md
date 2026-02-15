@@ -655,6 +655,23 @@ Requires [glass-watch-input](#glass-watch-input) running on Glass.
 
 ---
 
+## Pre-built APKs
+
+Pre-built debug APKs for all apps are in the [`apks/`](apks/) directory. To install on Glass:
+
+```bash
+adb install -r apks/glass-launcher.apk
+```
+
+For watch apps, install via WiFi ADB to the watch:
+
+```bash
+adb connect <watch-ip>:5555
+adb -s <watch-ip>:5555 install -r apks/watch-input.apk
+```
+
+---
+
 ## Building
 
 Each Android app is a standalone Gradle project. To build any app:

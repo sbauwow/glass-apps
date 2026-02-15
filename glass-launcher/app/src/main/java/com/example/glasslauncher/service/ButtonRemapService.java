@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 import com.example.glasslauncher.util.AppLaunchHelper;
 
@@ -28,6 +29,7 @@ public class ButtonRemapService extends AccessibilityService {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean longPressHandled;
+    private DialogNavigator dialogNavigator;
 
     private final Runnable longPressRunnable = new Runnable() {
         @Override
@@ -49,11 +51,22 @@ public class ButtonRemapService extends AccessibilityService {
             info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
             setServiceInfo(info);
         }
+
+        dialogNavigator = new DialogNavigator(this);
     }
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
         if (event.getKeyCode() == KeyEvent.KEYCODE_CAMERA) {
+            // When dialog overlay is showing, camera button clicks the selected element
+            if (dialogNavigator != null && dialogNavigator.isShowing()) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+                    Log.d(TAG, "Camera press — clicking dialog selection");
+                    dialogNavigator.performClick();
+                }
+                return true;
+            }
+
             if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                 longPressHandled = false;
                 handler.postDelayed(longPressRunnable, LONG_PRESS_THRESHOLD_MS);
@@ -71,7 +84,39 @@ public class ButtonRemapService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // Not used — we only need key event filtering
+        if (dialogNavigator == null) return;
+        if (event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
+
+        CharSequence className = event.getClassName();
+        if (className == null) return;
+
+        String cls = className.toString();
+        if (isDialogWindow(cls)) {
+            Log.d(TAG, "Dialog detected: " + cls);
+            try {
+                AccessibilityNodeInfo root = getRootInActiveWindow();
+                if (root != null) {
+                    dialogNavigator.show(root);
+                    root.recycle();
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to get root window", e);
+            }
+        } else if (dialogNavigator.isShowing()) {
+            Log.d(TAG, "Dialog dismissed, new window: " + cls);
+            dialogNavigator.hide();
+        }
+    }
+
+    /**
+     * Detect system dialog windows by class name heuristic.
+     */
+    private boolean isDialogWindow(String className) {
+        return className.contains("Dialog")
+                || className.contains("AlertActivity")
+                || className.contains("PermissionActivity")
+                || className.contains("ChooserActivity")
+                || className.contains("ResolverActivity");
     }
 
     @Override
@@ -82,6 +127,9 @@ public class ButtonRemapService extends AccessibilityService {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (dialogNavigator != null) {
+            dialogNavigator.hide();
+        }
         Log.d(TAG, "ButtonRemapService destroyed");
     }
 }

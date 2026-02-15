@@ -78,6 +78,9 @@ Custom home screen launcher that displays installed apps in a horizontally scrol
 - Two-finger tap and long-press gesture support
 - Camera button remapped to Home via accessibility service (`ButtonRemapService`): short press opens the camera as normal, long press returns to the launcher
 - Pinned apps appear first (configurable in source)
+- **System dialog navigator**: Detects system dialogs (USB permissions, install confirmations, etc.) and shows a touchpad-navigable overlay with cyan selection highlight. Swipe left/right to cycle elements, tap or camera button to click. Solves the problem of Glass's touchpad being unable to interact with standard Android dialogs.
+
+**Permissions:** `SYSTEM_ALERT_WINDOW`, `BIND_ACCESSIBILITY_SERVICE`
 
 No network or companion required — runs entirely on-device.
 

@@ -141,6 +141,7 @@ public class FlipperUsb {
 
     public void stop() {
         running = false;
+        handler.removeCallbacksAndMessages(null);
         if (ioThread != null) {
             ioThread.interrupt();
             try { ioThread.join(2000); } catch (InterruptedException e) { /* ignore */ }

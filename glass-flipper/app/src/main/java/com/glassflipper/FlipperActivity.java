@@ -100,6 +100,7 @@ public class FlipperActivity extends Activity implements FlipperUsb.Listener, Su
         if (intent != null && UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(intent.getAction())) {
             UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
             if (device != null) {
+                usb.stop();
                 usb.startWithDevice(device);
             }
         }

@@ -23,6 +23,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
 | [glass-notify](#glass-notify) | Notification forwarder + GPS passthrough + tilt-to-wake | WiFi/USB | Yes - glass-notify-client on phone |
 | [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
+| [glass-flipper](#glass-flipper) | Flipper Zero screen mirror via USB OTG | USB OTG | No (direct USB CDC serial) |
 
 ---
 
@@ -385,6 +386,36 @@ adb shell am start -n com.glassweather/.MainActivity --ef lat 40.7128 --ef lon -
 Auto-refreshes every 15 minutes. Falls back to a hardcoded default location when GPS is unavailable. When [glass-notify](#glass-notify) is running with GPS passthrough, glass-weather automatically uses the phone's real location.
 
 No companion required (but benefits from glass-notify GPS passthrough).
+
+---
+
+## glass-flipper
+
+Mirrors the Flipper Zero's 128x64 monochrome OLED display onto Glass in real-time over USB OTG. Connects via USB CDC serial, starts a Protobuf RPC session, and streams screen frames at ~18fps with pixel-perfect 5x nearest-neighbor scaling.
+
+**Permissions:** `WAKE_LOCK`, `USB_HOST`
+
+### Usage
+
+Plug the Flipper into Glass via USB OTG cable — the app auto-launches. Navigate the Flipper normally and its screen appears on Glass.
+
+**First-time setup:** Glass shows a USB permission dialog that can't be tapped via touchpad. Use ADB over WiFi to approve it remotely:
+
+```bash
+# Enable WiFi ADB while Glass is on USB
+adb tcpip 5555
+adb connect $(adb shell ip addr show wlan0 | grep -oP '(?<=inet )\S+(?=/)'):.5555
+
+# Unplug Glass, plug in Flipper via OTG, then tap OK remotely:
+adb -s <glass-ip>:5555 shell input tap 148 270   # tick "Use by default"
+adb -s <glass-ip>:5555 shell input tap 476 322   # tap OK
+```
+
+After checking "Use by default", future connections are automatic.
+
+**Gestures:** Swipe down or back to exit.
+
+No companion required — connects directly via USB.
 
 ---
 

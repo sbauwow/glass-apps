@@ -21,6 +21,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-stocks](#glass-stocks) | StockCharts Voyeur slideshow with 3 zoom levels | WiFi/USB | No |
 | [glass-weather](#glass-weather) | Current conditions & hourly forecast via Open-Meteo | WiFi/USB | No |
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
+| [glass-notify](#glass-notify) | Notification forwarder + GPS passthrough + tilt-to-wake | WiFi/USB | Yes - glass-notify-client on phone |
 | [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
 
 ---
@@ -66,16 +67,13 @@ No network or companion required.
 
 Custom home screen launcher that displays installed apps in a horizontally scrolling carousel. Replaces the stock Glass launcher with gesture-driven navigation.
 
-**Permissions:** `RECEIVE_BOOT_COMPLETED`, `SYSTEM_ALERT_WINDOW`
-
 ### Features
 
 - Horizontal app carousel with visual selection highlight
+- Status bar with date/time and battery percentage
 - Tap to launch, swipe left/right to browse, swipe down to dismiss
 - Two-finger tap and long-press gesture support
-- Auto-starts on boot via `BootReceiver`
 - Camera button remapped to Home via accessibility service (`ButtonRemapService`): short press opens the camera as normal, long press returns to the launcher
-- Optional floating home button overlay (`OverlayService`)
 - Pinned apps appear first (configurable in source)
 
 No network or companion required — runs entirely on-device.
@@ -302,6 +300,40 @@ No companion required — connects directly to the VESC BLE dongle.
 
 ---
 
+## glass-notify
+
+Phone-to-Glass notification forwarding system with GPS passthrough and tilt-to-wake. Two apps work together: a phone companion (`glass-notify-client`) captures notifications and GPS, and the Glass app (`glass-notify`) receives and displays them.
+
+**Permissions (Glass):** `INTERNET`, `WAKE_LOCK`, `ACCESS_WIFI_STATE`, `ACCESS_FINE_LOCATION`, `ACCESS_MOCK_LOCATION`
+
+### Features
+
+- **Notification forwarding:** Phone notifications appear on Glass with app name, title, and body. Screen wakes for 8 seconds per notification. History view holds last 50 entries.
+- **GPS passthrough:** Phone GPS is forwarded to Glass as a mock location provider. Any app using `LocationManager.GPS_PROVIDER` (e.g. glass-weather) automatically gets real coordinates.
+- **Tilt-to-wake:** Accelerometer-based head-tilt detection wakes the Glass screen when you look up. 300ms sustain threshold, 2-second cooldown, rejects motion and sideways tilt.
+
+### Protocol
+
+Length-prefixed JSON over TCP port 9876:
+```
+Notification: {"type":"notification","app":"Gmail","title":"New mail","text":"...","time":123}
+Location:     {"type":"location","lat":35.08,"lon":-106.65,"alt":1600,"acc":10,"time":123}
+Heartbeat:    {}
+```
+
+### Setup
+
+1. Install `glass-notify` on Glass, `glass-notify-client` on phone
+2. Enable mock locations on Glass (one-time):
+   ```bash
+   adb shell settings put secure mock_location 1
+   ```
+3. Launch glass-notify on Glass — note the IP:port shown on screen
+4. Launch glass-notify-client on phone, enter Glass IP, tap Start
+5. Grant notification access and location permissions when prompted
+
+---
+
 ## glass-clawd
 
 Voice assistant client for Claude AI on Glass. Records audio locally via `AudioRecord` (16kHz 16-bit mono), sends the WAV to a companion server which transcribes with `faster-whisper` and forwards the text to Claude — returning both the transcription and response in a single round-trip. Auto-restarts recording after each response for continuous conversation.
@@ -350,9 +382,9 @@ adb shell am start -n com.glassweather/.MainActivity --ef lat 40.7128 --ef lon -
 
 **Controls:** Tap to refresh. Swipe down or long-press to exit.
 
-Auto-refreshes every 15 minutes. Falls back to a hardcoded default location when GPS is unavailable (typical on Glass).
+Auto-refreshes every 15 minutes. Falls back to a hardcoded default location when GPS is unavailable. When [glass-notify](#glass-notify) is running with GPS passthrough, glass-weather automatically uses the phone's real location.
 
-No companion required.
+No companion required (but benefits from glass-notify GPS passthrough).
 
 ---
 

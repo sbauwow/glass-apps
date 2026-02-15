@@ -10,7 +10,6 @@ public final class PrefsManager {
 
     private static final String PREFS_NAME = "glass_launcher_prefs";
     private static final String KEY_CAMERA_ACTION = "camera_button_action";
-    private static final String KEY_OVERLAY_ENABLED = "overlay_enabled";
     private static final String KEY_SELECTED_INDEX = "selected_app_index";
 
     // Camera button action values
@@ -31,14 +30,6 @@ public final class PrefsManager {
 
     public void setCameraAction(String action) {
         prefs.edit().putString(KEY_CAMERA_ACTION, action).apply();
-    }
-
-    public boolean isOverlayEnabled() {
-        return prefs.getBoolean(KEY_OVERLAY_ENABLED, true);
-    }
-
-    public void setOverlayEnabled(boolean enabled) {
-        prefs.edit().putBoolean(KEY_OVERLAY_ENABLED, enabled).apply();
     }
 
     public int getSelectedIndex() {

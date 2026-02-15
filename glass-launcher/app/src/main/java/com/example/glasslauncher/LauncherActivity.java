@@ -2,10 +2,12 @@ package com.example.glasslauncher;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,9 +21,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import com.example.glasslauncher.gesture.GestureActionMap;
 import com.example.glasslauncher.gesture.GlassGestureHandler;
-import com.example.glasslauncher.service.OverlayService;
 import com.example.glasslauncher.util.AppLaunchHelper;
 import com.example.glasslauncher.util.PrefsManager;
 
@@ -48,9 +53,16 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
             "com.example.glassstream"
     );
 
+    private static final long STATUS_UPDATE_INTERVAL_MS = 30000;
+
     private HorizontalScrollView scrollView;
     private LinearLayout appContainer;
     private TextView emptyText;
+    private TextView dateTimeText;
+    private TextView batteryText;
+
+    private final SimpleDateFormat dateTimeFormat =
+            new SimpleDateFormat("EEE, MMM d  h:mm a", Locale.getDefault());
 
     private static final long LONG_PRESS_THRESHOLD_MS = 500;
 
@@ -62,6 +74,14 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean cameraLongPressHandled;
+
+    private final Runnable statusUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateStatus();
+            handler.postDelayed(this, STATUS_UPDATE_INTERVAL_MS);
+        }
+    };
 
     private final Runnable cameraLongPressRunnable = new Runnable() {
         @Override
@@ -80,15 +100,12 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
         scrollView = (HorizontalScrollView) findViewById(R.id.scroll_view);
         appContainer = (LinearLayout) findViewById(R.id.app_container);
         emptyText = (TextView) findViewById(R.id.empty_text);
+        dateTimeText = (TextView) findViewById(R.id.date_time_text);
+        batteryText = (TextView) findViewById(R.id.battery_text);
 
         prefsManager = new PrefsManager(this);
         gestureActionMap = new GestureActionMap(this);
         gestureHandler = new GlassGestureHandler(this);
-
-        // Start the overlay service
-        if (prefsManager.isOverlayEnabled()) {
-            startService(new Intent(this, OverlayService.class));
-        }
 
     }
 
@@ -102,12 +119,29 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
         }
         populateAppCards();
         highlightSelected();
+        handler.removeCallbacks(statusUpdateRunnable);
+        statusUpdateRunnable.run();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         prefsManager.setSelectedIndex(selectedIndex);
+        handler.removeCallbacks(statusUpdateRunnable);
+    }
+
+    private void updateStatus() {
+        dateTimeText.setText(dateTimeFormat.format(new Date()));
+
+        Intent batteryStatus = registerReceiver(null,
+                new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if (batteryStatus != null) {
+            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            if (level >= 0 && scale > 0) {
+                batteryText.setText((level * 100 / scale) + "%");
+            }
+        }
     }
 
     private void loadApps() {

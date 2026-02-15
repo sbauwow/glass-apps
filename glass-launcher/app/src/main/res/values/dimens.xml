@@ -7,6 +7,6 @@
     <dimen name="app_card_padding">12dp</dimen>
     <dimen name="app_icon_size">72dp</dimen>
     <dimen name="app_label_size">16sp</dimen>
-    <dimen name="overlay_button_size">40dp</dimen>
-    <dimen name="overlay_margin">8dp</dimen>
+    <dimen name="status_bar_height">32dp</dimen>
+    <dimen name="status_text_size">14sp</dimen>
 </resources>

@@ -38,8 +38,11 @@ adb reverse --remove tcp:$PORT 2>/dev/null || true
 
 # --- Start ---
 
-echo "Setting up adb reverse tcp:$PORT..."
-adb reverse tcp:$PORT tcp:$PORT
+if adb reverse tcp:$PORT tcp:$PORT 2>/dev/null; then
+    echo "adb reverse tcp:$PORT set up"
+else
+    echo "adb reverse failed (no device?) — streaming on LAN only"
+fi
 
 echo "Starting glass-monitor (mode: $MODE)..."
 "$VENV" "$SERVER" --mode "$MODE" --no-monitor --port "$PORT" "$@" &

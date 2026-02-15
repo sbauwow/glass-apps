@@ -112,6 +112,9 @@ Streams on port 8080 by default. View on Glass with [glass-display](#glass-displ
 
 ### Companion Scripts
 
+- `start.sh [mode] [args...]` — Clean start: kills old processes, sets up adb reverse, launches server. Default mode: zoom
+- `pick-and-stream.sh [args...]` — 5-second countdown to position mouse, then captures region and starts streaming
+- `pick-region.sh` — Find X,Y coordinates for `--region` without starting the server
 - `launch-glass-claude.sh` — Opens a terminal window sized to the GLASS monitor region
 
 ---

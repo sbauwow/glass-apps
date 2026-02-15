@@ -58,15 +58,6 @@ public class ButtonRemapService extends AccessibilityService {
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
         if (event.getKeyCode() == KeyEvent.KEYCODE_CAMERA) {
-            // When dialog overlay is showing, camera button clicks the selected element
-            if (dialogNavigator != null && dialogNavigator.isShowing()) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
-                    Log.d(TAG, "Camera press — clicking dialog selection");
-                    dialogNavigator.performClick();
-                }
-                return true;
-            }
-
             if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                 longPressHandled = false;
                 handler.postDelayed(longPressRunnable, LONG_PRESS_THRESHOLD_MS);

@@ -217,13 +217,6 @@ public class DialogNavigator {
         }
     }
 
-    // ---- Public actions (called from ButtonRemapService for camera button) ----
-
-    /** Click the currently selected element. Called by camera button press. */
-    public void performClick() {
-        clickSelected();
-    }
-
     // ---- Gesture actions ----
 
     private void selectNext() {

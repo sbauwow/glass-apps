@@ -1,5 +1,7 @@
 # Glass Apps
 
+> **Beta:** All apps in this collection are under active development. Expect bugs, breaking changes, and incomplete features. Use at your own risk.
+
 A collection of Android apps and utilities for **Google Glass Explorer Edition** running AOSP 5.1.1.
 
 All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, and have no AndroidX dependencies. Built with `./gradlew assembleDebug` and installed via `adb install -r`.

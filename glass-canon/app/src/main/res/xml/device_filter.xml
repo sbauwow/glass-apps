@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Canon cameras (any model) -->
+    <usb-device vendor-id="1193" />
+</resources>

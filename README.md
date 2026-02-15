@@ -18,6 +18,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-stream](#glass-stream) | Camera MJPEG streaming server | WiFi/USB | Optional - Python viewer & shell scripts |
 | [glass-term](#glass-term) | Terminal emulator with SSH client & favorites | None | No |
 | [glass-vnc](#glass-vnc) | VNC remote desktop viewer with zoom modes | WiFi/USB | No (connects to any VNC server) |
+| [glass-stocks](#glass-stocks) | StockCharts Voyeur slideshow with 3 zoom levels | WiFi/USB | No |
 | [glass-weather](#glass-weather) | Current conditions & hourly forecast via Open-Meteo | WiFi/USB | No |
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
 | [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
@@ -129,6 +130,26 @@ Simple Pomodoro timer for Glass. 15-minute work phases and 5-minute break phases
 **Controls:** Tap to pause/resume. Swipe down or long-press to exit.
 
 No network or companion required.
+
+---
+
+## glass-stocks
+
+StockCharts Voyeur viewer for Glass. Fetches the 10 rotating community stock charts from [StockCharts Voyeur](https://stockcharts.com/voyeur.html) and displays them as a fullscreen slideshow. Three tap-to-cycle zoom modes: Fit (full chart), Fill (center-crop), and Close-up (2.5x top-left for reading ticker symbols).
+
+**Permissions:** `INTERNET`, `WAKE_LOCK`
+
+### Usage
+
+```bash
+adb shell am start -n com.glassstocks/.MainActivity
+```
+
+**Controls:** Tap to cycle zoom. Swipe left/right for prev/next chart. Swipe down or long-press to exit.
+
+Auto-cycles every 10 seconds, re-fetches all images every 60 seconds. Counter overlay shows position (e.g. `3 / 10`).
+
+No companion required.
 
 ---
 

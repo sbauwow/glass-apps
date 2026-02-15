@@ -26,6 +26,8 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-bike-hud](#glass-bike-hud) | Biking HUD with heart rate, speed, distance | Bluetooth LE | Yes - watch-bike-hud on Galaxy Watch |
 | [watch-bike-hud](#watch-bike-hud) | Galaxy Watch sensor broadcaster for glass-bike-hud | Bluetooth LE | Yes - glass-bike-hud on Glass |
 | [glass-flipper](#glass-flipper) | Flipper Zero screen mirror via USB OTG | USB OTG | No (direct USB CDC serial) |
+| [glass-watch-input](#glass-watch-input) | BLE input bridge receiver — injects watch events as keys | Bluetooth LE | Yes — watch-input on Galaxy Watch |
+| [watch-input](#watch-input) | Galaxy Watch D-pad remote control for Glass | Bluetooth LE | Yes — glass-watch-input on Glass |
 
 ---
 
@@ -551,6 +553,105 @@ After checking "Use by default", future connections are automatic.
 **Gestures:** Swipe down or back to exit.
 
 No companion required — connects directly via USB.
+
+---
+
+## glass-watch-input
+
+BLE input bridge for Glass. Runs as an AccessibilityService, connects to a Galaxy Watch running [watch-input](#watch-input) over Bluetooth LE, and injects received input events as system-wide key presses using the `Instrumentation` API.
+
+**Permissions:** `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_COARSE_LOCATION`, `INJECT_EVENTS`
+
+**Important:** Must be installed as a priv-app (`/system/priv-app/`) for `INJECT_EVENTS` permission.
+
+### Input Mapping
+
+| Watch Input | Glass Key Event |
+|-------------|----------------|
+| D-Pad Up | `DPAD_UP` |
+| D-Pad Down | `DPAD_DOWN` |
+| D-Pad Left | `DPAD_LEFT` |
+| D-Pad Right | `DPAD_RIGHT` |
+| OK (center) | `DPAD_CENTER` |
+| Rotary CW | `DPAD_RIGHT` |
+| Rotary CCW | `DPAD_LEFT` |
+| Back / Home / Menu | Raw keycode injection |
+
+### Setup
+
+```bash
+# Install as priv-app on Glass (requires root / remount)
+adb root && adb remount
+adb push app/build/outputs/apk/debug/app-debug.apk /system/priv-app/GlassWatchInput/GlassWatchInput.apk
+adb reboot
+
+# Enable the accessibility service
+adb shell settings put secure enabled_accessibility_services \
+  com.glasswatchinput/com.glasswatchinput.InputBridgeService
+adb shell settings put secure accessibility_enabled 1
+```
+
+A setup activity is included for manual BLE scanning and device selection, but in headless mode the service auto-connects to the strongest discovered watch.
+
+### BLE Protocol
+
+Custom GATT service `0000ff20-...` with a single notify characteristic (`0000ff21-...`). 4-byte payloads:
+
+| Byte | Field | Values |
+|------|-------|--------|
+| 0 | Type | `0x01` KEY, `0x02` GESTURE, `0x03` ROTARY |
+| 1 | Value | Gesture/rotary ID or Android keycode |
+| 2 | Action | `0x00` DOWN, `0x01` UP (keys only) |
+| 3 | Reserved | `0x00` |
+
+Requires [watch-input](#watch-input) running on a Galaxy Watch.
+
+---
+
+## watch-input
+
+Wear OS remote control app for Glass. Displays a D-pad with directional buttons (up/down/left/right/OK) and system buttons (Back, Home, Menu). Sends all input to Glass over BLE using a GATT server. Also forwards hardware stem button presses and rotary encoder input.
+
+**Platform:** Wear OS, Kotlin, minSdk 30, targetSdk 34, Java 17
+
+**Permissions:** `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`, `WAKE_LOCK`, `POST_NOTIFICATIONS`
+
+### UI Layout
+
+```
+        [  UP  ]
+  [LEFT] [ OK ] [RIGHT]
+        [ DOWN ]
+
+  [BACK] [HOME] [MENU]
+```
+
+- **D-Pad buttons** send gesture events (mapped to DPAD keys on Glass)
+- **System buttons** send key down+up pairs (BACK, HOME, MENU)
+- **Rotary encoder** sends CW/CCW events
+- **Stem buttons** forwarded as raw key events
+
+### Usage
+
+```bash
+# Build
+cd watch-input && ./gradlew assembleDebug
+
+# Install on watch via WiFi ADB
+adb connect <watch-ip>:5555
+adb -s <watch-ip>:5555 install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+1. Launch on watch — BLE advertising starts automatically
+2. Enable glass-watch-input accessibility service on Glass
+3. Glass auto-connects to the watch
+4. Use the on-screen buttons to control Glass remotely
+
+### Dependencies
+
+- `com.google.android.wearable:wearable:2.9.0` (compileOnly)
+
+Requires [glass-watch-input](#glass-watch-input) running on Glass.
 
 ---
 

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="STARTING..."
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/last_input_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Last: --"
+        android:textColor="#888888"
+        android:textSize="14sp"
+        android:paddingTop="8dp" />
+
+    <Button
+        android:id="@+id/scan_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SCAN"
+        android:textSize="14sp"
+        android:layout_marginTop="8dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/device_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+</LinearLayout>

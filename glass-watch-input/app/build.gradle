@@ -1,0 +1,34 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.glasswatchinput'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.glasswatchinput"
+        minSdk 19
+        targetSdk 19
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+}

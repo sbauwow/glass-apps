@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Glass display: 640x360. Biking HUD layout.
+    Heart rate is the hero metric — largest element, dead center.
+
+    ┌──────────────────────────────────────┐
+    │  14.2 mph                      [X]  │
+    │  mph                                │
+    │              ♥ 142                   │
+    │               bpm                   │
+    │  3.42 mi   00:45:12   CONNECTED     │
+    └──────────────────────────────────────┘
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/hud_bg"
+    android:padding="8dp">
+
+    <!-- CLOSE BUTTON (top-right corner) -->
+    <TextView
+        android:id="@+id/close_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:text="[X]"
+        android:textColor="#CCFF1744"
+        android:textSize="18sp"
+        android:padding="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="#22FFFFFF" />
+
+    <!-- LEFT COLUMN: Speed -->
+    <LinearLayout
+        android:id="@+id/speed_block"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/speed_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--"
+            android:textColor="@color/hud_white"
+            android:textSize="56sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="mph"
+            android:textColor="@color/hud_dim"
+            android:textSize="12sp"
+            android:layout_marginTop="-4dp" />
+    </LinearLayout>
+
+    <!-- CENTER: HEART RATE (hero metric) -->
+    <LinearLayout
+        android:id="@+id/hr_block"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/hr_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="HR"
+            android:textColor="@color/hud_dim"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/hr_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--"
+            android:textColor="@color/hud_green"
+            android:textSize="72sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed" />
+
+        <TextView
+            android:id="@+id/hr_unit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="bpm"
+            android:textColor="@color/hud_dim"
+            android:textSize="16sp"
+            android:layout_marginTop="-8dp" />
+    </LinearLayout>
+
+    <!-- STATUS BAR (bottom right) — connection state -->
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:text="SCANNING..."
+        android:textColor="@color/hud_dim"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- BOTTOM ROW: Distance, Elapsed time -->
+    <LinearLayout
+        android:id="@+id/bottom_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="4dp"
+        android:layout_toLeftOf="@id/status_text"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/distance_value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="-- mi"
+            android:textColor="@color/hud_dim"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/elapsed_value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="--:--:--"
+            android:textColor="@color/hud_dim"
+            android:textSize="20sp"
+            android:gravity="center" />
+    </LinearLayout>
+
+</RelativeLayout>

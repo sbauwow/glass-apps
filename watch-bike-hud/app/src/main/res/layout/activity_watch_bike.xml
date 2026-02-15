@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="@android:color/black">
+
+    <!-- Heart rate display -->
+    <TextView
+        android:id="@+id/hr_display"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="-- bpm"
+        android:textColor="#FF00E676"
+        android:textSize="32sp"
+        android:textStyle="bold" />
+
+    <!-- Status row: GPS + BLE -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/gps_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GPS: --"
+            android:textColor="#FF9E9E9E"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  |  "
+            android:textColor="#FF9E9E9E"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/ble_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BLE: 0"
+            android:textColor="#FF9E9E9E"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Distance + Time -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/distance_display"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00 mi"
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  "
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/elapsed_display"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00:00"
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Start / Stop button -->
+    <Button
+        android:id="@+id/start_stop_btn"
+        android:layout_width="120dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:text="START"
+        android:textSize="16sp" />
+
+</LinearLayout>

@@ -23,6 +23,8 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
 | [glass-notify](#glass-notify) | Notification forwarder + GPS passthrough + tilt-to-wake | WiFi/USB | Yes - glass-notify-client on phone |
 | [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
+| [glass-bike-hud](#glass-bike-hud) | Biking HUD with heart rate, speed, distance | Bluetooth LE | Yes - watch-bike-hud on Galaxy Watch |
+| [watch-bike-hud](#watch-bike-hud) | Galaxy Watch sensor broadcaster for glass-bike-hud | Bluetooth LE | Yes - glass-bike-hud on Glass |
 | [glass-flipper](#glass-flipper) | Flipper Zero screen mirror via USB OTG | USB OTG | No (direct USB CDC serial) |
 
 ---
@@ -386,6 +388,136 @@ adb shell am start -n com.glassweather/.MainActivity --ef lat 40.7128 --ef lon -
 Auto-refreshes every 15 minutes. Falls back to a hardcoded default location when GPS is unavailable. When [glass-notify](#glass-notify) is running with GPS passthrough, glass-weather automatically uses the phone's real location.
 
 No companion required (but benefits from glass-notify GPS passthrough).
+
+---
+
+## glass-bike-hud
+
+Biking heads-up display that receives heart rate, GPS speed, distance, and elapsed time from a Galaxy Watch over Bluetooth LE. The watch runs a companion app ([watch-bike-hud](#watch-bike-hud)) that acts as a BLE GATT server, streaming sensor data in real-time. Glass acts as a receive-only BLE GATT client — no polling, the watch pushes all data via notifications.
+
+**Permissions:** `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_COARSE_LOCATION`, `WAKE_LOCK`
+
+### HUD Layout (640x360)
+
+```
+┌──────────────────────────────────────┐
+│  14.2 mph                      [X]  │
+│  mph                                │
+│              ♥ 142                   │
+│               bpm                   │
+│  3.42 mi   00:45:12   CONNECTED     │
+└──────────────────────────────────────┘
+```
+
+- **Center:** Heart rate (hero metric, 72sp bold, color-coded by HR zone)
+- **Top-left:** Speed in mph (56sp bold, color-coded)
+- **Bottom-left:** Trip distance (miles)
+- **Bottom-center:** Elapsed ride time (HH:MM:SS)
+- **Bottom-right:** BLE connection status
+- **Top-right:** [X] close button
+
+### Color Thresholds
+
+| Metric | Green | Yellow | Red |
+|--------|-------|--------|-----|
+| Heart rate | < 130 bpm | 130–160 bpm | > 160 bpm |
+| Speed | — (white) | > 20 mph | > 30 mph |
+
+### BLE Protocol
+
+Custom GATT service `0000ff10-...` with three notify characteristics:
+
+| Characteristic | UUID | Format |
+|----------------|------|--------|
+| Heart Rate | `0000ff11-...` | 1 byte: bpm (uint8) |
+| Location | `0000ff12-...` | 24 bytes: lat(f64) + lon(f64) + speed_mps(f32) + bearing(f32) |
+| Trip | `0000ff13-...` | 8 bytes: distance_m(f32) + elapsed_s(uint32) |
+
+### Features
+
+- Auto-discovers watches advertising the bike HUD service UUID
+- Trusted device persistence (auto-reconnects across app restarts)
+- Single device auto-trust, picker UI for multiple watches
+- Queued CCCD descriptor writes for reliable characteristic subscription
+- Auto-reconnect on disconnect (rescan after 2s)
+
+### Controls
+
+| Input | Action |
+|-------|--------|
+| Tap | Reconnect (stop + rescan) |
+| Long-press | Exit |
+| Swipe down | Exit |
+| [X] tap | Exit |
+| [X] long-press | Forget trusted watches + rescan |
+| Back / Escape | Exit |
+
+### Usage
+
+```bash
+# Build and install on Glass
+cd glass-bike-hud && ./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Requires [watch-bike-hud](#watch-bike-hud) running on a Galaxy Watch.
+
+---
+
+## watch-bike-hud
+
+Wear OS companion app for [glass-bike-hud](#glass-bike-hud). Runs on Galaxy Watch 4/5/6/7 as a foreground service, reading the heart rate sensor and GPS, then broadcasting all data to Glass via BLE GATT notifications. The watch acts as a BLE GATT peripheral (server); Glass connects as the client.
+
+**Platform:** Wear OS, Kotlin, minSdk 30, targetSdk 34, Java 17
+
+**Permissions:** `BODY_SENSORS`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `BLUETOOTH_ADVERTISE`, `BLUETOOTH_CONNECT`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_HEALTH`, `WAKE_LOCK`, `POST_NOTIFICATIONS`
+
+### Architecture
+
+```
+WatchBikeActivity (UI: start/stop, current stats)
+  └── BikeSensorService (Foreground Service)
+        ├── SensorManager → TYPE_HEART_RATE
+        ├── FusedLocationProviderClient → GPS (1s interval, HIGH_ACCURACY)
+        ├── DistanceTracker → accumulates GPS distance with jitter filter
+        └── BleGattServer → advertise + notify connected clients
+```
+
+### Sensor Data
+
+- **Heart rate:** Android `TYPE_HEART_RATE` sensor, filters unreliable readings, pushes via BLE on each change
+- **GPS:** Google Play Services FusedLocation, 1s interval / 500ms fastest, pushes lat/lon/speed/bearing
+- **Distance:** Accumulates `Location.distanceTo()` with jitter filter — rejects < 2m (noise) and > 100m (teleports), ignores points with > 20m accuracy
+- **Elapsed time:** Counts from service start, updates every 1s
+
+### BLE GATT Server
+
+Advertises custom service UUID `0000ff10-...` with `LOW_LATENCY` mode and `HIGH` TX power. Supports multiple concurrent Glass connections. All three characteristics are notify-only with proper CCCD descriptor handling.
+
+### Watch UI
+
+Simple dark screen showing current HR, GPS status, BLE connection count, distance, elapsed time, and a START/STOP button to control the foreground service.
+
+### Usage
+
+```bash
+# Build
+cd watch-bike-hud && ./gradlew assembleDebug
+
+# Install via ADB over WiFi to watch
+adb connect <watch-ip>:5555
+adb -s <watch-ip>:5555 install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+1. Launch on watch, grant all permissions (body sensors, location, BLE, notifications)
+2. Tap **START** — foreground notification appears, BLE advertising begins
+3. Launch glass-bike-hud on Glass — auto-discovers and connects
+4. Tap **STOP** to end the session
+
+### Dependencies
+
+- `com.google.android.gms:play-services-location:21.0.1` (FusedLocation)
+- `com.google.android.wearable:wearable:2.9.0` (compileOnly)
 
 ---
 

@@ -55,8 +55,8 @@ Custom home screen launcher that displays installed apps in a horizontally scrol
 - Tap to launch, swipe left/right to browse, swipe down to dismiss
 - Two-finger tap and long-press gesture support
 - Auto-starts on boot via `BootReceiver`
+- Camera button remapped to Home via accessibility service (`ButtonRemapService`): short press opens the camera as normal, long press returns to the launcher
 - Optional floating home button overlay (`OverlayService`)
-- Camera button remapping via accessibility service (`ButtonRemapService`)
 - Pinned apps appear first (configurable in source)
 
 No network or companion required — runs entirely on-device.

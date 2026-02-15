@@ -19,7 +19,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-term](#glass-term) | Terminal emulator with SSH client & favorites | None | No |
 | [glass-vnc](#glass-vnc) | VNC remote desktop viewer with zoom modes | WiFi/USB | No (connects to any VNC server) |
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
-| [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client (WIP) | WiFi/USB | Yes - Python proxy server |
+| [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
 
 ---
 
@@ -280,30 +280,33 @@ No companion required — connects directly to the VESC BLE dongle.
 
 ---
 
-## glass-clawd (WIP)
+## glass-clawd
 
-Voice assistant client for Claude AI on Glass. Uses a WebView chat interface with native Android speech recognition. Press the camera button, tap the touchpad, or press D-pad center to speak — your voice is transcribed and sent to Claude via a proxy server. Auto-detects when Claude responds and re-opens the mic for continuous conversation.
-
-**Status:** Work in progress — functional but under active development.
+Voice assistant client for Claude AI on Glass. Records audio locally via `AudioRecord` (16kHz 16-bit mono), sends the WAV to a companion server which transcribes with `faster-whisper` and forwards the text to Claude — returning both the transcription and response in a single round-trip. Auto-restarts recording after each response for continuous conversation.
 
 **Permissions:** `INTERNET`, `RECORD_AUDIO`
 
-### Companion Server (Required)
+**Controls:** Tap or camera button to start/stop recording. Swipe up/down to scroll chat.
 
-The app connects to a Python HTTP proxy server that relays messages to the Anthropic API.
+### Companion Server (Required)
 
 ```bash
 cd glass-clawd/server
-ANTHROPIC_API_KEY=sk-... python3 server.py --host 0.0.0.0 --port 8080
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env && chmod 600 .env
+python server.py                    # default: base Whisper model
+python server.py --model small      # or: tiny, base, small, medium
 ```
 
 **Endpoints:**
 - `GET /` — Chat web UI
 - `GET /history` — Conversation history (JSON)
-- `POST /chat` — Send a message to Claude
+- `POST /chat` — Text input → `{"reply": "..."}`
+- `POST /voice` — Multipart WAV audio → `{"transcription": "...", "reply": "..."}`
 - `POST /clear` — Reset conversation
 
-**Note:** The server IP is hardcoded in `MainActivity.java` as `http://192.168.0.196:8080/`. Update this to match your host machine's IP.
+**Note:** The server IP is hardcoded in `MainActivity.java`. Update it to match your host machine's IP.
 
 ---
 

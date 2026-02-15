@@ -657,7 +657,17 @@ Requires [glass-watch-input](#glass-watch-input) running on Glass.
 
 ## Pre-built APKs
 
-Pre-built debug APKs for all apps are in the [`apks/`](apks/) directory. To install on Glass:
+Pre-built debug APKs for all apps are in the [`apks/`](apks/) directory.
+
+The easiest way to install is with the interactive installer — it walks through each app with a description and lets you pick which ones to install:
+
+```bash
+./install.sh        # interactive — pick apps with y/n
+./install.sh -y     # install everything without prompting
+./install.sh -h     # list all apps with descriptions
+```
+
+Or install individual APKs manually:
 
 ```bash
 adb install -r apks/glass-launcher.apk

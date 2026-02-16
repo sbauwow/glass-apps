@@ -1,7 +1,12 @@
 package com.glassdisplay;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.GestureDetector;
@@ -29,9 +34,20 @@ public class MainActivity extends Activity implements MjpegView.Listener {
     private MjpegView mjpegView;
     private TextView statusText;
     private TextView fpsText;
+    private TextView batteryText;
     private GestureDetector gestureDetector;
     private Handler handler;
     private Runnable hideStatusRunnable;
+
+    private final BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+            int pct = (int) (100f * level / scale);
+            batteryText.setText(pct + "%");
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +58,7 @@ public class MainActivity extends Activity implements MjpegView.Listener {
         mjpegView = (MjpegView) findViewById(R.id.mjpeg_view);
         statusText = (TextView) findViewById(R.id.status_text);
         fpsText = (TextView) findViewById(R.id.fps_text);
+        batteryText = (TextView) findViewById(R.id.battery_text);
         handler = new Handler();
 
         mjpegView.setListener(this);
@@ -104,6 +121,7 @@ public class MainActivity extends Activity implements MjpegView.Listener {
     protected void onResume() {
         super.onResume();
         mjpegView.startStream();
+        registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
     }
 
     @Override
@@ -111,6 +129,7 @@ public class MainActivity extends Activity implements MjpegView.Listener {
         super.onPause();
         mjpegView.stopStream();
         handler.removeCallbacks(hideStatusRunnable);
+        unregisterReceiver(batteryReceiver);
     }
 
     // ---- MjpegView.Listener ----

@@ -137,12 +137,12 @@ public class ReaderActivity extends Activity {
                     return true;
                 case KeyEvent.KEYCODE_DPAD_UP:
                     if (readerView.getMode() == ReaderView.MODE_TELEPROMPTER) {
-                        readerView.adjustSpeed(0.5f);
+                        readerView.adjustSpeed(0.05f);
                     }
                     return true;
                 case KeyEvent.KEYCODE_DPAD_DOWN:
                     if (readerView.getMode() == ReaderView.MODE_TELEPROMPTER) {
-                        readerView.adjustSpeed(-0.5f);
+                        readerView.adjustSpeed(-0.05f);
                     }
                     return true;
                 case KeyEvent.KEYCODE_DPAD_CENTER:
@@ -161,7 +161,7 @@ public class ReaderActivity extends Activity {
         if (readerView.getMode() == ReaderView.MODE_BOOK) {
             readerView.nextPage();
         } else {
-            readerView.jumpForward();
+            readerView.adjustSpeed(0.05f);
         }
     }
 
@@ -169,7 +169,7 @@ public class ReaderActivity extends Activity {
         if (readerView.getMode() == ReaderView.MODE_BOOK) {
             readerView.prevPage();
         } else {
-            readerView.jumpBackward();
+            readerView.adjustSpeed(-0.05f);
         }
     }
 
@@ -179,19 +179,19 @@ public class ReaderActivity extends Activity {
 
     private void onSwipeUp() {
         if (readerView.getMode() == ReaderView.MODE_TELEPROMPTER) {
-            readerView.adjustSpeed(0.5f);
+            readerView.adjustSpeed(0.05f);
         }
     }
 
     private void onTap() {
+        readerView.toggleMode();
+    }
+
+    private void onLongPress() {
         if (readerView.getMode() == ReaderView.MODE_BOOK) {
             readerView.toggleStatusBar();
         } else {
             readerView.toggleTeleprompter();
         }
-    }
-
-    private void onLongPress() {
-        readerView.toggleMode();
     }
 }

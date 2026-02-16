@@ -30,20 +30,21 @@ Launch "Glass Reader" from the app launcher. If only one PDF is present, it open
 |---------|--------|
 | Swipe forward | Next page |
 | Swipe backward | Previous page |
-| Tap | Toggle status bar |
-| Long press | Switch to teleprompter |
+| Tap | Switch to teleprompter |
+| Long press | Toggle status bar |
 | Swipe down | Exit to file picker |
 | DPAD left/right | Previous/next page |
 
 ### Teleprompter Mode
 
+Auto-scrolling starts automatically when entering this mode.
+
 | Gesture | Action |
 |---------|--------|
-| Tap | Pause / resume scrolling |
-| Swipe forward | Jump forward one page |
-| Swipe backward | Jump backward one page |
-| Long press | Switch to book mode |
-| Swipe up | Increase scroll speed |
+| Tap | Switch to book mode |
+| Swipe forward | Speed up scrolling |
+| Swipe backward | Slow down scrolling |
+| Long press | Pause / resume scrolling |
 | Swipe down | Exit to file picker |
 | DPAD up/down | Increase/decrease speed |
 

@@ -46,7 +46,7 @@ public class ReaderView extends View {
 
     // Teleprompter
     private boolean teleprompterRunning = false;
-    private float scrollSpeed = 1.5f;
+    private float scrollSpeed = 0.05f;
     private final Handler scrollHandler = new Handler();
     private final Runnable scrollRunnable = new Runnable() {
         @Override
@@ -205,7 +205,7 @@ public class ReaderView extends View {
     }
 
     public void adjustSpeed(float delta) {
-        scrollSpeed = Math.max(0.5f, Math.min(scrollSpeed + delta, 5f));
+        scrollSpeed = Math.max(0.05f, Math.min(scrollSpeed + delta, 2f));
     }
 
     public void jumpForward() {
@@ -237,6 +237,7 @@ public class ReaderView extends View {
                 scrollOffsetY = currentPage * paginator.getLinesPerPage() * lineHeight;
             }
             mode = MODE_TELEPROMPTER;
+            startTeleprompter();
         } else {
             // Convert scroll offset to page
             if (paginator != null && paginator.getLinesPerPage() > 0) {

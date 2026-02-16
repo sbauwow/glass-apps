@@ -4,4 +4,5 @@
     <string name="accessibility_service_description">Intercepts the camera button to perform a configurable action instead of launching the camera.</string>
     <string name="no_apps">No launchable apps found</string>
     <string name="home_button_label">Home</string>
+    <string name="setup_banner">Tap to enable camera button &amp; dialog navigation</string>
 </resources>

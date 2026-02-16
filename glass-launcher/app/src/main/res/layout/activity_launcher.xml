@@ -65,6 +65,23 @@
             android:textSize="20sp"
             android:visibility="gone" />
 
+        <!-- Setup banner: shown when accessibility service is not enabled -->
+        <TextView
+            android:id="@+id/setup_banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="#DD222222"
+            android:gravity="center"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:text="@string/setup_banner"
+            android:textColor="#FF00BCD4"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
     </FrameLayout>
 
 </LinearLayout>

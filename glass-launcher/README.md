@@ -49,7 +49,11 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 ### Enable Accessibility Service
 
-Required for camera button remap and dialog navigation:
+Required for camera button remap and dialog navigation. Without this, the camera long-press-to-home and system dialog navigation will not work.
+
+**Option A — On-device (recommended):** On first launch, a cyan banner appears at the bottom of the home screen saying "Tap to enable camera button & dialog navigation". Tap the touchpad to open Accessibility Settings, then select "Glass Launcher Button Remap" and enable it.
+
+**Option B — Via adb:**
 
 ```bash
 adb shell settings put secure enabled_accessibility_services \
@@ -57,7 +61,7 @@ adb shell settings put secure enabled_accessibility_services \
 adb shell settings put secure accessibility_enabled 1
 ```
 
-Or: Settings > Accessibility > Glass Launcher Button Remap
+The banner disappears automatically once the service is enabled.
 
 ## Files
 

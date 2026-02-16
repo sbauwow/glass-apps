@@ -11,6 +11,8 @@ import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -55,11 +57,15 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
 
     private static final long STATUS_UPDATE_INTERVAL_MS = 30000;
 
+    private static final String ACCESSIBILITY_SERVICE_ID =
+            "com.example.glasslauncher/com.example.glasslauncher.service.ButtonRemapService";
+
     private HorizontalScrollView scrollView;
     private LinearLayout appContainer;
     private TextView emptyText;
     private TextView dateTimeText;
     private TextView batteryText;
+    private TextView setupBanner;
 
     private final SimpleDateFormat dateTimeFormat =
             new SimpleDateFormat("EEE, MMM d  h:mm a", Locale.getDefault());
@@ -102,6 +108,7 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
         emptyText = (TextView) findViewById(R.id.empty_text);
         dateTimeText = (TextView) findViewById(R.id.date_time_text);
         batteryText = (TextView) findViewById(R.id.battery_text);
+        setupBanner = (TextView) findViewById(R.id.setup_banner);
 
         prefsManager = new PrefsManager(this);
         gestureActionMap = new GestureActionMap(this);
@@ -121,6 +128,13 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
         highlightSelected();
         handler.removeCallbacks(statusUpdateRunnable);
         statusUpdateRunnable.run();
+
+        // Show setup banner if accessibility service is not enabled
+        if (isAccessibilityServiceEnabled()) {
+            setupBanner.setVisibility(View.GONE);
+        } else {
+            setupBanner.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -293,6 +307,10 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
 
     @Override
     public void onTap() {
+        if (setupBanner.getVisibility() == View.VISIBLE) {
+            openAccessibilitySettings();
+            return;
+        }
         int action = gestureActionMap.getAction(GestureActionMap.GESTURE_TAP);
         performAction(action);
     }
@@ -367,6 +385,23 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
         AppInfo app = apps.get(selectedIndex);
         Log.d(TAG, "Launching: " + app.getLabel());
         AppLaunchHelper.launchApp(this, app.getPackageName(), app.getActivityName());
+    }
+
+    private boolean isAccessibilityServiceEnabled() {
+        String enabledServices = Settings.Secure.getString(
+                getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        if (TextUtils.isEmpty(enabledServices)) return false;
+        return enabledServices.contains(ACCESSIBILITY_SERVICE_ID);
+    }
+
+    private void openAccessibilitySettings() {
+        try {
+            Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to open accessibility settings", e);
+        }
     }
 
     private void showAppInfo() {

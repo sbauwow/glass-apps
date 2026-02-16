@@ -25,6 +25,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [vesc-glass](#vesc-glass) | Electric skateboard telemetry HUD | Bluetooth LE | No (connects to VESC BLE dongle) |
 | [glass-notify](#glass-notify) | Notification forwarder + GPS passthrough + tilt-to-wake | WiFi/USB | Yes - glass-notify-client on phone |
 | [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
+| [glass-dashboard](#glass-dashboard) | News, sports scores, and stock quotes on 3 swipeable pages | WiFi/USB | No |
 | [glass-bike-hud](#glass-bike-hud) | Biking HUD with heart rate, speed, distance | Bluetooth LE | Yes - watch-bike-hud on Galaxy Watch |
 | [watch-bike-hud](#watch-bike-hud) | Galaxy Watch sensor broadcaster for glass-bike-hud | Bluetooth LE | Yes - glass-bike-hud on Glass |
 | [glass-flipper](#glass-flipper) | Flipper Zero screen mirror via USB OTG | USB OTG | No (direct USB CDC serial) |
@@ -371,6 +372,36 @@ python server.py --model small      # or: tiny, base, small, medium
 - `POST /clear` — Reset conversation
 
 **Note:** The server IP is hardcoded in `MainActivity.java`. Update it to match your host machine's IP.
+
+---
+
+## glass-dashboard
+
+Information dashboard for Glass with three swipeable pages: news headlines, live sports scores, and stock quotes. All data comes from free, no-API-key sources.
+
+**Permissions:** `INTERNET`, `WAKE_LOCK`
+
+### Pages
+
+| Page | Source | Refresh |
+|------|--------|---------|
+| News | Google News RSS (via feed2json) | 15 min |
+| Sports | ESPN hidden API (NFL, NBA, MLB, NHL) | 5 min |
+| Stocks | Yahoo Finance quotes | 5 min |
+
+### Usage
+
+```bash
+# Launch with default stock watchlist (AAPL, MSFT, GOOGL, AMZN, TSLA, META, NVDA, SPY, QQQ, DIA)
+adb shell am start -n com.glassdashboard/.MainActivity
+
+# Custom stock watchlist (persisted across launches)
+adb shell am start -n com.glassdashboard/.MainActivity --es symbols "AAPL,GME,BTC-USD"
+```
+
+**Controls:** Swipe left/right to switch pages. Tap to refresh current page. Swipe down, long-press, or back to exit.
+
+No companion required.
 
 ---
 

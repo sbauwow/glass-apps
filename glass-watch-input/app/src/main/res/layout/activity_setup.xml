@@ -24,6 +24,16 @@
         android:textSize="14sp"
         android:paddingTop="8dp" />
 
+    <TextView
+        android:id="@+id/hint_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Service is running in background.\nClose this app for normal use.\nPress SCAN only to pair a new watch."
+        android:textColor="#666666"
+        android:textSize="12sp"
+        android:paddingTop="4dp"
+        android:visibility="visible" />
+
     <Button
         android:id="@+id/scan_btn"
         android:layout_width="wrap_content"

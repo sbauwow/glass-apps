@@ -9,12 +9,24 @@ import android.widget.TextView;
 
 import java.util.List;
 
+/**
+ * Setup-only activity for initial watch pairing.
+ *
+ * WARNING: This activity creates its own BLE connection which conflicts
+ * with the InputBridgeService's connection. Close this activity for
+ * normal operation — the service handles everything in the background.
+ *
+ * Only open this activity when you need to pair a new watch or debug
+ * the BLE connection.
+ */
 public class SetupActivity extends Activity implements BleManager.Listener {
 
     private TextView statusText;
     private TextView lastInputText;
+    private TextView hintText;
     private LinearLayout deviceList;
     private BleManager bleManager;
+    private boolean bleStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +35,7 @@ public class SetupActivity extends Activity implements BleManager.Listener {
 
         statusText = findViewById(R.id.status_text);
         lastInputText = findViewById(R.id.last_input_text);
+        hintText = findViewById(R.id.hint_text);
         deviceList = findViewById(R.id.device_list);
         Button scanBtn = findViewById(R.id.scan_btn);
 
@@ -32,6 +45,8 @@ public class SetupActivity extends Activity implements BleManager.Listener {
         scanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                bleStarted = true;
+                hintText.setVisibility(View.GONE);
                 bleManager.clearTrustedDevices();
                 deviceList.removeAllViews();
                 bleManager.stop();
@@ -39,12 +54,19 @@ public class SetupActivity extends Activity implements BleManager.Listener {
             }
         });
 
-        bleManager.start();
+        // Don't auto-start BLE — let the InputBridgeService handle the connection.
+        // Only scan when the user presses the SCAN button for initial pairing.
+        statusText.setText("IDLE");
+        if (hintText != null) {
+            hintText.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
     protected void onDestroy() {
-        bleManager.stop();
+        if (bleStarted) {
+            bleManager.stop();
+        }
         super.onDestroy();
     }
 

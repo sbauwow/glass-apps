@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <!-- Loading / status text -->
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="Loading..."
+        android:textColor="@color/dim_grey"
+        android:textSize="24sp"
+        android:fontFamily="sans-serif-light"
+        android:visibility="visible" />
+
+    <!-- Main content area with ViewFlipper -->
+    <ViewFlipper
+        android:id="@+id/viewFlipper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/dotContainer"
+        android:visibility="gone">
+
+        <!-- Page 1: News -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:id="@+id/newsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </ScrollView>
+
+        <!-- Page 2: Sports -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:id="@+id/sportsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </ScrollView>
+
+        <!-- Page 3: Stocks -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:id="@+id/stocksContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </ScrollView>
+
+    </ViewFlipper>
+
+    <!-- Dot indicators -->
+    <LinearLayout
+        android:id="@+id/dotContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <View
+            android:id="@+id/dot0"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/dot_active" />
+
+        <View
+            android:id="@+id/dot1"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/dot_inactive" />
+
+        <View
+            android:id="@+id/dot2"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/dot_inactive" />
+
+    </LinearLayout>
+
+</RelativeLayout>

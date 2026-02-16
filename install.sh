@@ -23,6 +23,7 @@ CATALOG=(
     "glass-kill|glass|Kill all non-essential background processes to free memory"
     "glass-stocks|glass|StockCharts Voyeur slideshow with 3 zoom levels"
     "glass-weather|glass|Current conditions and hourly forecast via Open-Meteo"
+    "glass-dashboard|glass|News headlines, sports scores, and stock quotes — 3 swipeable pages"
     "glass-pomodoro|glass|Pomodoro timer — 15min work / 5min break"
     "glass-clawd|glass|Voice-powered Claude AI chat (needs companion server)"
     "glass-notify|glass|Phone notification forwarder + GPS passthrough + tilt-to-wake"

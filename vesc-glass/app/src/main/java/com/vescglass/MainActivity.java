@@ -1,11 +1,16 @@
 package com.vescglass;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.view.GestureDetector;
@@ -47,10 +52,25 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
     private TextView tripValue;
     private TextView statusText;
     private TextView headingValue;
+    private TextView glassBatt;
     private ProgressBar dutyBar;
 
     // Picker overlay (shown when multiple untrusted VESCs found)
     private LinearLayout pickerOverlay;
+
+    // Glass battery receiver
+    private final BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+            int pct = (level * 100) / scale;
+            glassBatt.setText("G:" + pct + "%");
+            if (pct < 15) glassBatt.setTextColor(COLOR_RED);
+            else if (pct < 30) glassBatt.setTextColor(COLOR_YELLOW);
+            else glassBatt.setTextColor(COLOR_DIM);
+        }
+    };
 
     private static final int COLOR_OK     = Color.WHITE;
     private static final int COLOR_YELLOW = Color.parseColor("#FFEB3B");
@@ -74,6 +94,7 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
         statusText     = (TextView)    findViewById(R.id.status_text);
         dutyBar        = (ProgressBar) findViewById(R.id.duty_bar);
         headingValue   = (TextView)    findViewById(R.id.heading_value);
+        glassBatt      = (TextView)    findViewById(R.id.glass_batt);
 
         // Compass sensor
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -149,12 +170,14 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
         if (orientationSensor != null) {
             sensorManager.registerListener(this, orientationSensor, SensorManager.SENSOR_DELAY_UI);
         }
+        registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         ble.start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        unregisterReceiver(batteryReceiver);
         sensorManager.unregisterListener(this);
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();

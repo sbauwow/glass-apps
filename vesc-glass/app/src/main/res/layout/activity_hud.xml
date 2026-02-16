@@ -60,13 +60,25 @@
             android:gravity="right" />
     </LinearLayout>
 
-    <!-- STATUS BAR (bottom) — connection state + duty bar -->
+    <!-- STATUS BAR (bottom) — connection state + Glass battery + duty bar -->
+    <TextView
+        android:id="@+id/glass_batt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:text=""
+        android:textColor="@color/hud_dim"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
     <TextView
         android:id="@+id/status_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
+        android:layout_toLeftOf="@id/glass_batt"
+        android:layout_marginRight="12dp"
         android:text="SCANNING..."
         android:textColor="@color/hud_dim"
         android:textSize="14sp"

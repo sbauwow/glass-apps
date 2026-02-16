@@ -1,17 +1,18 @@
 # Glass Reader
 
-PDF reader for Google Glass Enterprise Edition. Extracts text from PDFs and displays them as paginated readable text on the 640x360 display. Two reading modes: **book mode** (swipe through pages) and **teleprompter mode** (auto-scrolling text).
+PDF and EPUB reader for Google Glass Enterprise Edition. Extracts text from PDFs and EPUBs and displays them as paginated readable text on the 640x360 display. Two reading modes: **book mode** (swipe through pages) and **teleprompter mode** (auto-scrolling text).
 
 ## Setup
 
-Place PDF files in `/sdcard/glass-reader/` on the device:
+Place PDF or EPUB files in `/sdcard/glass-reader/` on the device:
 
 ```
 adb shell mkdir -p /sdcard/glass-reader
-adb push mybook.pdf /sdcard/glass-reader/
+adb push mybook.epub /sdcard/glass-reader/
+adb push document.pdf /sdcard/glass-reader/
 ```
 
-Launch "Glass Reader" from the app launcher. If only one PDF is present, it opens automatically. Otherwise a file picker is shown.
+Launch "Glass Reader" from the app launcher. If only one file is present, it opens automatically. Otherwise a file picker is shown.
 
 ## Controls
 
@@ -50,7 +51,8 @@ Auto-scrolling starts automatically when entering this mode.
 
 ## Features
 
-- **Text extraction** via PdfBox-Android — page-by-page with progress indicator
+- **PDF extraction** via PdfBox-Android — page-by-page with progress indicator
+- **EPUB extraction** via built-in `java.util.zip` + `XmlPullParser` — parses OPF spine and converts XHTML chapters to plain text, no extra dependencies
 - **Word-wrap** using `Paint.measureText()` for pixel-accurate line breaking
 - **Reading state persistence** — saves page, scroll offset, and mode per file via SharedPreferences; resumes on relaunch
 - **Status bar** — shows filename, page number (book) or scroll percentage (teleprompter), and mode indicator (BOOK/SCROLL/PAUSED)

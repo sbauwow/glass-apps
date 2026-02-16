@@ -80,6 +80,17 @@ class InputActivity : Activity() {
             sendKey(KeyEvent.KEYCODE_MENU)
         }
 
+        // Extra buttons for dialogs and settings navigation
+        findViewById<Button>(R.id.btn_tab).setOnClickListener {
+            sendKey(KeyEvent.KEYCODE_TAB)
+        }
+        findViewById<Button>(R.id.btn_enter).setOnClickListener {
+            sendKey(KeyEvent.KEYCODE_ENTER)
+        }
+        findViewById<Button>(R.id.btn_esc).setOnClickListener {
+            sendKey(KeyEvent.KEYCODE_ESCAPE)
+        }
+
         requestPermissions()
         startForegroundService(Intent(this, InputService::class.java))
     }

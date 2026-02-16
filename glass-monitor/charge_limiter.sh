@@ -15,8 +15,6 @@ if [ -z "$GLASS_SERIAL" ]; then
 fi
 ADB="adb -s $GLASS_SERIAL"
 
-charging_disabled=false
-
 echo "Glass charge limiter: limit=${CHARGE_LIMIT}%, resume=${CHARGE_RESUME}% (device: $GLASS_SERIAL)"
 
 while true; do
@@ -30,16 +28,18 @@ while true; do
         continue
     fi
 
-    if [ "$level" -ge "$CHARGE_LIMIT" ] && [ "$charging_disabled" = false ]; then
+    # Read actual sysfs state — don't rely on a local variable since the device
+    # can reboot, USB can reconnect, or the value can reset from sleep/wake
+    charge_off=$($ADB shell cat "$SYSFS" 2>/dev/null | tr -d '\r')
+
+    if [ "$level" -ge "$CHARGE_LIMIT" ] && [ "$charge_off" != "1" ]; then
         $ADB shell "echo 1 > $SYSFS"
-        charging_disabled=true
         echo "$(date +%H:%M:%S) Battery ${level}% — charging DISABLED"
-    elif [ "$level" -le "$CHARGE_RESUME" ] && [ "$charging_disabled" = true ]; then
+    elif [ "$level" -le "$CHARGE_RESUME" ] && [ "$charge_off" = "1" ]; then
         $ADB shell "echo 0 > $SYSFS"
-        charging_disabled=false
         echo "$(date +%H:%M:%S) Battery ${level}% — charging ENABLED"
     else
-        echo "$(date +%H:%M:%S) Battery ${level}% (${status}) — $([ "$charging_disabled" = true ] && echo 'charging off' || echo 'charging on')"
+        echo "$(date +%H:%M:%S) Battery ${level}% (${status}) — $([ "$charge_off" = "1" ] && echo 'charging off' || echo 'charging on')"
     fi
 
     sleep "$POLL_INTERVAL"

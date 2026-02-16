@@ -91,8 +91,6 @@ monitor_device() {
     fi
     echo "[$label] Using: $sysfs_path"
 
-    local charging_disabled=false
-
     while true; do
         # Check device is still connected
         if ! adb devices | grep -q "$serial"; then
@@ -109,13 +107,22 @@ monitor_device() {
             continue
         fi
 
+        # Read actual sysfs state each iteration — don't rely on a local variable
+        # since device reboots, USB reconnects, or sleep/wake can reset the value
+        local cur_val
+        cur_val=$(adb -s "$serial" shell cat "$sysfs_path" 2>/dev/null | tr -d '\r')
+        local charging_disabled=false
+        if is_inverted "$sysfs_path"; then
+            [ "$cur_val" = "0" ] && charging_disabled=true
+        else
+            [ "$cur_val" = "1" ] && charging_disabled=true
+        fi
+
         if [ "$level" -ge "$CHARGE_LIMIT" ] && [ "$charging_disabled" = false ]; then
             disable_charging "$serial" "$sysfs_path"
-            charging_disabled=true
             echo "$(date +%H:%M:%S) [$label] Battery ${level}% — charging DISABLED"
         elif [ "$level" -le "$CHARGE_RESUME" ] && [ "$charging_disabled" = true ]; then
             enable_charging "$serial" "$sysfs_path"
-            charging_disabled=false
             echo "$(date +%H:%M:%S) [$label] Battery ${level}% — charging ENABLED"
         else
             local state

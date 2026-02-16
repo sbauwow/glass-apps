@@ -1,0 +1,2 @@
+rootProject.name = 'glass-rss'
+include ':app'

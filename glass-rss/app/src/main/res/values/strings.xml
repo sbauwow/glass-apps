@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glass RSS</string>
+    <string name="loading">Loading feeds\u2026</string>
+    <string name="no_items">No feed items</string>
+    <string name="refresh">Refreshing\u2026</string>
+</resources>

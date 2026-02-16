@@ -26,6 +26,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-notify](#glass-notify) | Notification forwarder + GPS passthrough + tilt-to-wake | WiFi/USB | Yes - glass-notify-client on phone |
 | [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
 | [glass-dashboard](#glass-dashboard) | News, sports scores, and stock quotes on 3 swipeable pages | WiFi/USB | No |
+| [glass-rss](#glass-rss) | Multi-feed RSS reader with swipeable cards | WiFi/USB | No |
 | [glass-bike-hud](#glass-bike-hud) | Biking HUD with heart rate, speed, distance | Bluetooth LE | Yes - watch-bike-hud on Galaxy Watch |
 | [watch-bike-hud](#watch-bike-hud) | Galaxy Watch sensor broadcaster for glass-bike-hud | Bluetooth LE | Yes - glass-bike-hud on Glass |
 | [glass-flipper](#glass-flipper) | Flipper Zero screen mirror via USB OTG | USB OTG | No (direct USB CDC serial) |
@@ -400,6 +401,40 @@ adb shell am start -n com.glassdashboard/.MainActivity --es symbols "AAPL,GME,BT
 ```
 
 **Controls:** Swipe left/right to switch pages. Tap to refresh current page. Swipe down, long-press, or back to exit.
+
+No companion required.
+
+---
+
+## glass-rss
+
+Multi-feed RSS reader for Glass. Fetches multiple RSS/Atom feeds in parallel, merges and sorts all items by date, and displays them as horizontally swipeable cards. Auto-detects RSS 2.0 and Atom formats.
+
+**Permissions:** `INTERNET`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`
+
+### Default Feeds
+
+- Hacker News (Front Page)
+- Ars Technica
+- The Verge
+- Yahoo Finance (S&P 500 news)
+- Yahoo Finance (AAPL, MSFT, GOOG, NVDA news)
+
+### Configuration
+
+Feed URLs are read from `/sdcard/glass-rss-feeds.txt` (one URL per line, `#` for comments). The file is auto-created with defaults if missing. Edit it to customize:
+
+```bash
+adb shell "echo 'https://hnrss.org/frontpage' > /sdcard/glass-rss-feeds.txt"
+```
+
+### Usage
+
+```bash
+adb shell am start -n com.example.glassrss/.RssActivity
+```
+
+**Controls:** Swipe left/right to browse cards. Swipe down to exit. Long-press to refresh. Auto-refreshes every 15 minutes. Fetches up to 20 items per feed.
 
 No companion required.
 

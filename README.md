@@ -631,40 +631,44 @@ No companion required — connects directly via USB.
 
 ## glass-watch-input
 
-BLE input bridge for Glass. Runs as an AccessibilityService, connects to a Galaxy Watch running [watch-input](#watch-input) over Bluetooth LE, and injects received input events as system-wide key presses using the `Instrumentation` API.
+BLE input bridge for Glass. Runs as an AccessibilityService, connects to a Galaxy Watch running [watch-input](#watch-input) over Bluetooth LE, and injects received input events as system-wide key events. System keys (Home, Back, Menu) use `performGlobalAction()`. D-pad keys are injected via a root key bridge daemon that reads from a FIFO.
 
-**Permissions:** `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_COARSE_LOCATION`, `INJECT_EVENTS`
+**Permissions:** `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_COARSE_LOCATION`
 
-**Important:** Must be installed as a priv-app (`/system/priv-app/`) for `INJECT_EVENTS` permission.
+**Important:** Must be installed as a priv-app (`/system/priv-app/`). Requires a one-time setup of the root key bridge daemon for D-pad injection.
 
 ### Input Mapping
 
-| Watch Input | Glass Key Event |
-|-------------|----------------|
-| D-Pad Up | `DPAD_UP` |
-| D-Pad Down | `DPAD_DOWN` |
-| D-Pad Left | `DPAD_LEFT` |
-| D-Pad Right | `DPAD_RIGHT` |
-| OK (center) | `DPAD_CENTER` |
-| Rotary CW | `DPAD_RIGHT` |
-| Rotary CCW | `DPAD_LEFT` |
-| Back / Home / Menu | Raw keycode injection |
+| Watch Input | Glass Action |
+|-------------|-------------|
+| D-Pad directions | `DPAD_UP/DOWN/LEFT/RIGHT` (via root daemon) |
+| OK (center) | `DPAD_CENTER` (via root daemon) |
+| Rotary CW/CCW | `DPAD_RIGHT/LEFT` (via root daemon) |
+| Tap gesture | `DPAD_CENTER` (via root daemon) |
+| Swipe gestures | `DPAD_LEFT/RIGHT/UP/DOWN` (via root daemon) |
+| Long press | Back (global action) |
+| Home / Back / Menu | Global actions (no extra permissions needed) |
+
+### How D-pad Injection Works
+
+Android's `INJECT_EVENTS` permission is `signature`-only — even priv-apps can't get it. The solution is a root daemon that starts on boot:
+
+```
+Watch → BLE → InputBridgeService → writes to FIFO → root daemon → input keyevent
+```
+
+The daemon runs as root via init's `flash_recovery` service, reading key codes from `/data/local/tmp/keybridge`.
 
 ### Setup
 
-```bash
-# Install as priv-app on Glass (requires root / remount)
-adb root && adb remount
-adb push app/build/outputs/apk/debug/app-debug.apk /system/priv-app/GlassWatchInput/GlassWatchInput.apk
-adb reboot
+Use the setup script for a fully automated install:
 
-# Enable the accessibility service
-adb shell settings put secure enabled_accessibility_services \
-  com.glasswatchinput/com.glasswatchinput.InputBridgeService
-adb shell settings put secure accessibility_enabled 1
+```bash
+cd glass-watch-input
+./setup.sh
 ```
 
-A setup activity is included for manual BLE scanning and device selection, but in headless mode the service auto-connects to the strongest discovered watch.
+This builds the APK, installs it as a priv-app, sets up the root key bridge daemon, enables the accessibility service, and reboots Glass. See the [glass-watch-input README](glass-watch-input/README.md) for manual setup and troubleshooting.
 
 ### BLE Protocol
 

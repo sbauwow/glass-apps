@@ -108,9 +108,15 @@ setup_services() {
     echo ""
     echo -e "${CYAN}Setting up services...${NC}"
 
-    adb shell settings put secure enabled_accessibility_services \
-        com.example.glasslauncher/com.example.glasslauncher.service.ButtonRemapService \
-        >/dev/null 2>&1 && ok "ButtonRemapService enabled" || warn "ButtonRemapService — set manually"
+    local services="com.example.glasslauncher/com.example.glasslauncher.service.ButtonRemapService"
+
+    # Add InputBridgeService if glass-watch-input was installed
+    if $watchinput_selected; then
+        services="${services}:com.glasswatchinput/com.glasswatchinput.InputBridgeService"
+    fi
+
+    adb shell settings put secure enabled_accessibility_services "$services" \
+        >/dev/null 2>&1 && ok "Accessibility services enabled" || warn "Accessibility services — set manually"
 
     adb shell settings put secure accessibility_enabled 1 \
         >/dev/null 2>&1 || true
@@ -174,6 +180,7 @@ echo ""
 # Collect selections
 selected=()
 launcher_selected=false
+watchinput_selected=false
 
 for entry in "${CATALOG[@]}"; do
     IFS='|' read -r name target desc <<< "$entry"
@@ -185,11 +192,13 @@ for entry in "${CATALOG[@]}"; do
     if $YES_ALL; then
         selected+=("$entry")
         [[ "$name" == "glass-launcher" ]] && launcher_selected=true
+        [[ "$name" == "glass-watch-input" ]] && watchinput_selected=true
         echo -e "  ${GREEN}→ selected${NC}"
     else
         if ask "  Install?"; then
             selected+=("$entry")
             [[ "$name" == "glass-launcher" ]] && launcher_selected=true
+            [[ "$name" == "glass-watch-input" ]] && watchinput_selected=true
         fi
     fi
     echo ""
@@ -234,8 +243,8 @@ for entry in "${selected[@]}"; do
     esac
 done
 
-# Enable accessibility service if launcher was installed
-if $launcher_selected; then
+# Enable accessibility services if launcher or watch-input was installed
+if $launcher_selected || $watchinput_selected; then
     setup_services
 fi
 

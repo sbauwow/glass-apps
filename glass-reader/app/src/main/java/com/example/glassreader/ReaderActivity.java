@@ -34,37 +34,18 @@ public class ReaderActivity extends Activity {
             return;
         }
 
-        File pdfFile = new File(path);
-        filename = pdfFile.getName();
+        File bookFile = new File(path);
+        filename = bookFile.getName();
 
         readerView.setLoading("Loading " + filename + "...");
 
-        PdfTextExtractor.extract(this, pdfFile, new PdfTextExtractor.Callback() {
-            @Override
-            public void onSuccess(String text) {
-                if (text.trim().isEmpty()) {
-                    readerView.setLoading("No extractable text in PDF");
-                    return;
-                }
-                readerView.setText(text, filename);
+        ExtractionCallback cb = new ExtractionCallback();
 
-                // Restore saved position
-                int savedPage = readingState.getPage(filename);
-                float savedScroll = readingState.getScrollOffset(filename);
-                int savedMode = readingState.getMode(filename);
-                readerView.restorePosition(savedPage, savedScroll, savedMode);
-            }
-
-            @Override
-            public void onError(String message) {
-                readerView.setLoading("Error: " + message);
-            }
-
-            @Override
-            public void onProgress(int page, int totalPages) {
-                readerView.setLoading("Extracting page " + page + "/" + totalPages + "...");
-            }
-        });
+        if (filename.toLowerCase().endsWith(".epub")) {
+            EpubTextExtractor.extract(bookFile, cb);
+        } else {
+            PdfTextExtractor.extract(this, bookFile, cb);
+        }
     }
 
     @Override
@@ -192,6 +173,31 @@ public class ReaderActivity extends Activity {
             readerView.toggleStatusBar();
         } else {
             readerView.toggleTeleprompter();
+        }
+    }
+
+    private class ExtractionCallback implements PdfTextExtractor.Callback, EpubTextExtractor.Callback {
+        @Override
+        public void onSuccess(String text) {
+            if (text.trim().isEmpty()) {
+                readerView.setLoading("No extractable text");
+                return;
+            }
+            readerView.setText(text, filename);
+            int savedPage = readingState.getPage(filename);
+            float savedScroll = readingState.getScrollOffset(filename);
+            int savedMode = readingState.getMode(filename);
+            readerView.restorePosition(savedPage, savedScroll, savedMode);
+        }
+
+        @Override
+        public void onError(String message) {
+            readerView.setLoading("Error: " + message);
+        }
+
+        @Override
+        public void onProgress(int page, int totalPages) {
+            readerView.setLoading("Extracting " + page + "/" + totalPages + "...");
         }
     }
 }

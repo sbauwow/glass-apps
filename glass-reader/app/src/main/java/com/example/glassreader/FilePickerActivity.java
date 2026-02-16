@@ -30,7 +30,7 @@ public class FilePickerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        scanForPdfs();
+        scanForFiles();
 
         if (pdfFiles.size() == 1) {
             openPdf(pdfFiles.get(0));
@@ -45,12 +45,12 @@ public class FilePickerActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        scanForPdfs();
+        scanForFiles();
         selectedIndex = Math.min(selectedIndex, Math.max(0, pdfFiles.size() - 1));
         if (pickerView != null) pickerView.invalidate();
     }
 
-    private void scanForPdfs() {
+    private void scanForFiles() {
         pdfFiles.clear();
         File dir = new File(Environment.getExternalStorageDirectory(), "glass-reader");
         if (!dir.exists()) {
@@ -61,8 +61,11 @@ public class FilePickerActivity extends Activity {
             if (files != null) {
                 Arrays.sort(files);
                 for (File f : files) {
-                    if (f.isFile() && f.getName().toLowerCase().endsWith(".pdf")) {
-                        pdfFiles.add(f);
+                    if (f.isFile()) {
+                        String name = f.getName().toLowerCase();
+                        if (name.endsWith(".pdf") || name.endsWith(".epub")) {
+                            pdfFiles.add(f);
+                        }
                     }
                 }
             }
@@ -216,9 +219,8 @@ public class FilePickerActivity extends Activity {
                 }
 
                 String name = pdfFiles.get(i).getName();
-                if (name.toLowerCase().endsWith(".pdf")) {
-                    name = name.substring(0, name.length() - 4);
-                }
+                int dot = name.lastIndexOf('.');
+                if (dot > 0) name = name.substring(0, dot);
                 canvas.drawText(name, 16f, y + itemBaseline + 5f, itemPaint);
             }
 

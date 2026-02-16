@@ -26,6 +26,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-notify](#glass-notify) | Notification forwarder + GPS passthrough + tilt-to-wake | WiFi/USB | Yes - glass-notify-client on phone |
 | [glass-clawd](#glass-clawd) | Voice-powered Claude AI chat client | WiFi/USB | Yes - Python proxy + Whisper server |
 | [glass-dashboard](#glass-dashboard) | News, sports scores, and stock quotes on 3 swipeable pages | WiFi/USB | No |
+| [glass-reader](#glass-reader) | PDF reader with book and teleprompter modes | None | No |
 | [glass-rss](#glass-rss) | Multi-feed RSS reader with swipeable cards | WiFi/USB | No |
 | [glass-bike-hud](#glass-bike-hud) | Biking HUD with heart rate, speed, distance | Bluetooth LE | Yes - watch-bike-hud on Galaxy Watch |
 | [watch-bike-hud](#watch-bike-hud) | Galaxy Watch sensor broadcaster for glass-bike-hud | Bluetooth LE | Yes - glass-bike-hud on Glass |
@@ -403,6 +404,42 @@ adb shell am start -n com.glassdashboard/.MainActivity --es symbols "AAPL,GME,BT
 **Controls:** Swipe left/right to switch pages. Tap to refresh current page. Swipe down, long-press, or back to exit.
 
 No companion required.
+
+---
+
+## glass-reader
+
+PDF reader for Glass. Extracts text from PDFs using PdfBox-Android and displays as paginated readable text on the 640x360 display. Two reading modes: **book mode** (swipe through pages) and **teleprompter mode** (auto-scrolling text that starts at a comfortable reading pace).
+
+**Permissions:** `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`
+
+### Setup
+
+```bash
+adb shell mkdir -p /sdcard/glass-reader
+adb push mybook.pdf /sdcard/glass-reader/
+```
+
+If only one PDF is present, it opens automatically. Multiple PDFs show a file picker.
+
+### Controls
+
+| Mode | Gesture | Action |
+|------|---------|--------|
+| Picker | Swipe fwd/back | Select file |
+| Picker | Tap | Open file |
+| Book | Swipe fwd/back | Next/prev page |
+| Book | Tap | Switch to teleprompter |
+| Book | Long press | Toggle status bar |
+| Teleprompter | Swipe forward | Speed up |
+| Teleprompter | Swipe backward | Slow down |
+| Teleprompter | Tap | Switch to book |
+| Teleprompter | Long press | Pause/resume |
+| All | Swipe down | Exit |
+
+Reading position, scroll offset, and mode are saved per file and restored on relaunch.
+
+No network or companion required.
 
 ---
 

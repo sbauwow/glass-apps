@@ -29,6 +29,7 @@ CATALOG=(
     "glass-clawd|glass|Voice-powered Claude AI chat (needs companion server)"
     "glass-notify|glass|Phone notification forwarder + GPS passthrough + tilt-to-wake"
     "glass-flipper|glass|Flipper Zero screen mirror via USB OTG"
+    "glass-reader|glass|PDF and EPUB reader with book and teleprompter modes"
     "glass-canon|glass|Canon T5 live viewfinder + shutter control"
     "glass-bike-hud|glass|Biking HUD — heart rate, speed, distance from Galaxy Watch"
     "vesc-glass|glass|Electric skateboard telemetry HUD via VESC BLE"

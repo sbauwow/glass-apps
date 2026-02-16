@@ -417,13 +417,18 @@ Current weather conditions and hourly forecast for Glass. Uses the free [Open-Me
 # Launch with default location (Albuquerque, NM)
 adb shell am start -n com.glassweather/.MainActivity
 
+# Set location by city name (resolved via geocoding, persisted across launches)
+adb shell am start -n com.glassweather/.MainActivity --es city "Denver, CO"
+
 # Launch with custom coordinates
 adb shell am start -n com.glassweather/.MainActivity --ef lat 40.7128 --ef lon -74.0060
 ```
 
 **Controls:** Tap to refresh. Swipe down or long-press to exit.
 
-Auto-refreshes every 15 minutes. Falls back to a hardcoded default location when GPS is unavailable. When [glass-notify](#glass-notify) is running with GPS passthrough, glass-weather automatically uses the phone's real location.
+**Location priority:** City name intent → lat/lon intent → saved location (SharedPreferences) → GPS/network → default (Albuquerque, NM). City names are resolved via the [Open-Meteo geocoding API](https://open-meteo.com/en/docs/geocoding-api) and persisted, so subsequent launches remember the location.
+
+Auto-refreshes every 15 minutes. When [glass-notify](#glass-notify) is running with GPS passthrough, glass-weather automatically uses the phone's real location.
 
 No companion required (but benefits from glass-notify GPS passthrough).
 

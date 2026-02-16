@@ -2,6 +2,7 @@ package com.glassweather;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.location.Location;
 import android.location.LocationListener;
@@ -43,6 +44,12 @@ public class MainActivity extends Activity {
     private static final String DEFAULT_LOCATION_NAME = "Albuquerque, NM";
     private static final double DEFAULT_LAT = 35.0844;
     private static final double DEFAULT_LON = -106.6504;
+
+    private static final String PREFS_NAME = "weather_prefs";
+    private static final String PREF_LAT = "lat";
+    private static final String PREF_LON = "lon";
+    private static final String PREF_CITY = "city";
+    private static final String GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1";
 
     private TextView statusText;
     private View weatherContent;
@@ -105,16 +112,36 @@ public class MainActivity extends Activity {
         handler = new Handler(Looper.getMainLooper());
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        // Check for location passed via intent (adb shell am start --ef lat X --ef lon Y)
-        double intentLat = getIntent().getFloatExtra("lat", Float.NaN);
-        double intentLon = getIntent().getFloatExtra("lon", Float.NaN);
-        if (!Double.isNaN(intentLat) && !Double.isNaN(intentLon)) {
-            lastLat = intentLat;
-            lastLon = intentLon;
-            fetchWeather(lastLat, lastLon);
-            handler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS);
+        // Priority: 1) --es city "Name"  2) --ef lat/lon  3) SharedPreferences  4) GPS/default
+        String intentCity = getIntent().getStringExtra("city");
+        if (intentCity != null && !intentCity.isEmpty()) {
+            statusText.setText("Looking up " + intentCity + "...");
+            geocodeCity(intentCity);
         } else {
-            requestLocation();
+            double intentLat = getIntent().getFloatExtra("lat", Float.NaN);
+            double intentLon = getIntent().getFloatExtra("lon", Float.NaN);
+            if (!Double.isNaN(intentLat) && !Double.isNaN(intentLon)) {
+                lastLat = intentLat;
+                lastLon = intentLon;
+                saveLocation(lastLat, lastLon, null);
+                fetchWeather(lastLat, lastLon);
+                handler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS);
+            } else {
+                // Check SharedPreferences for saved location
+                SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                float savedLat = prefs.getFloat(PREF_LAT, Float.NaN);
+                float savedLon = prefs.getFloat(PREF_LON, Float.NaN);
+                if (!Float.isNaN(savedLat) && !Float.isNaN(savedLon)) {
+                    lastLat = savedLat;
+                    lastLon = savedLon;
+                    String savedCity = prefs.getString(PREF_CITY, null);
+                    if (savedCity != null) locationName.setText(savedCity);
+                    fetchWeather(lastLat, lastLon);
+                    handler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS);
+                } else {
+                    requestLocation();
+                }
+            }
         }
     }
 
@@ -173,6 +200,90 @@ public class MainActivity extends Activity {
         // Start auto-refresh timer
         handler.removeCallbacks(refreshRunnable);
         handler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS);
+    }
+
+    private void saveLocation(double lat, double lon, String city) {
+        SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
+        editor.putFloat(PREF_LAT, (float) lat);
+        editor.putFloat(PREF_LON, (float) lon);
+        if (city != null) editor.putString(PREF_CITY, city);
+        editor.apply();
+    }
+
+    private void geocodeCity(final String city) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String encoded = java.net.URLEncoder.encode(city, "UTF-8");
+                    String urlStr = String.format(Locale.US, GEOCODE_URL, encoded);
+
+                    TrustManager[] trustAll = new TrustManager[] {
+                        new X509TrustManager() {
+                            public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                            public void checkClientTrusted(X509Certificate[] certs, String type) {}
+                            public void checkServerTrusted(X509Certificate[] certs, String type) {}
+                        }
+                    };
+                    SSLContext sc = SSLContext.getInstance("TLS");
+                    sc.init(null, trustAll, new java.security.SecureRandom());
+
+                    URL url = new URL(urlStr);
+                    HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+                    conn.setSSLSocketFactory(sc.getSocketFactory());
+                    conn.setConnectTimeout(10000);
+                    conn.setReadTimeout(10000);
+
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(conn.getInputStream()));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    reader.close();
+                    conn.disconnect();
+
+                    JSONObject json = new JSONObject(sb.toString());
+                    JSONArray results = json.optJSONArray("results");
+                    if (results != null && results.length() > 0) {
+                        JSONObject result = results.getJSONObject(0);
+                        final double lat = result.getDouble("latitude");
+                        final double lon = result.getDouble("longitude");
+                        final String name = result.getString("name");
+                        String admin = result.optString("admin1", "");
+                        final String displayName = admin.isEmpty() ? name : name + ", " + admin;
+
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                lastLat = lat;
+                                lastLon = lon;
+                                locationName.setText(displayName);
+                                saveLocation(lat, lon, displayName);
+                                fetchWeather(lat, lon);
+                                handler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS);
+                            }
+                        });
+                    } else {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                statusText.setText("City not found: " + city);
+                            }
+                        });
+                    }
+                } catch (final Exception e) {
+                    Log.e(TAG, "Geocode failed", e);
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            statusText.setText("Geocode error: " + e.getMessage());
+                        }
+                    });
+                }
+            }
+        }).start();
     }
 
     private void fetchWeather(final double lat, final double lon) {

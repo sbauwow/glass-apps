@@ -65,14 +65,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
-        android:layout_margin="8dp"
-        android:background="@color/status_bg"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
-        android:textColor="@color/status_text"
-        android:textSize="14sp"
+        android:layout_margin="2dp"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
+        android:textColor="#66FFFFFF"
+        android:textSize="10sp"
         android:text="" />
 
 </FrameLayout>

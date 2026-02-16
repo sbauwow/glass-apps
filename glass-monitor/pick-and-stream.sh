@@ -46,30 +46,64 @@ fi
 
 $ADB reverse --remove tcp:$PORT 2>/dev/null || true
 
-# --- Pick region ---
+# --- Pick region or display ---
 
 echo -e "${CYAN}Displays:${RESET}"
-xrandr --listmonitors | tail -n +2 | while read line; do
+DISPLAY_NAMES=()
+while read line; do
     name=$(echo "$line" | awk '{print $2}' | sed 's/^+\*//' | sed 's/^+//')
     geom=$(echo "$line" | awk '{print $3}')
     res=$(echo "$geom" | sed 's|/[0-9]*||g' | sed 's/+/ @ /;s/+/,/')
     echo -e "  ${GREEN}$name${RESET}  $res"
+    DISPLAY_NAMES+=("$name")
+done < <(xrandr --listmonitors | tail -n +2)
+
+# Check if --display was passed in extra args
+DISPLAY_MODE=""
+for arg in "$@"; do
+    case "$arg" in
+        --display) DISPLAY_MODE="next" ;;
+        --display=*) DISPLAY_MODE="${arg#--display=}" ;;
+        *) [ "$DISPLAY_MODE" = "next" ] && DISPLAY_MODE="$arg" ;;
+    esac
 done
 
-echo
-echo -e "${YELLOW}Move mouse to capture origin. You have 5 seconds...${RESET}"
-echo
+EXTRA_ARGS=()
+REGION_ARG=""
 
-for i in 5 4 3 2 1; do
+if [ -n "$DISPLAY_MODE" ] && [ "$DISPLAY_MODE" != "next" ]; then
+    # Stream an entire display
+    echo
+    echo -e "  ${GREEN}>>> Streaming display: $DISPLAY_MODE${RESET}"
+    EXTRA_ARGS+=(--display "$DISPLAY_MODE")
+    # Filter --display from forwarded args
+    SKIP_NEXT=false
+    for arg in "$@"; do
+        if $SKIP_NEXT; then SKIP_NEXT=false; continue; fi
+        case "$arg" in
+            --display) SKIP_NEXT=true ;;
+            --display=*) ;;
+            *) EXTRA_ARGS+=("$arg") ;;
+        esac
+    done
+else
+    # Interactive region picker
+    echo
+    echo -e "${YELLOW}Move mouse to capture origin. You have 5 seconds...${RESET}"
+    echo
+
+    for i in 5 4 3 2 1; do
+        eval $(xdotool getmouselocation --shell)
+        printf "\r  ${CYAN}%d${RESET}  Position: ${CYAN}%-5d${RESET}, ${CYAN}%-5d${RESET}  " "$i" "$X" "$Y"
+        sleep 1
+    done
+
     eval $(xdotool getmouselocation --shell)
-    printf "\r  ${CYAN}%d${RESET}  Position: ${CYAN}%-5d${RESET}, ${CYAN}%-5d${RESET}  " "$i" "$X" "$Y"
-    sleep 1
-done
-
-eval $(xdotool getmouselocation --shell)
-REGION="$X,$Y"
-echo
-echo -e "  ${GREEN}>>> Captured --region $REGION${RESET}"
+    REGION_ARG="$X,$Y"
+    echo
+    echo -e "  ${GREEN}>>> Captured --region $REGION_ARG${RESET}"
+    EXTRA_ARGS=("$@")
+fi
 
 # --- Start server ---
 
@@ -80,8 +114,13 @@ else
     echo -e "${YELLOW}$ADB reverse failed (no device?) — streaming on LAN only${RESET}"
 fi
 
-echo -e "${GREEN}Starting glass-monitor with --region $REGION $@${RESET}"
-"$VENV" "$SERVER" --region "$REGION" --no-monitor --port "$PORT" "$@" &
+if [ -n "$REGION_ARG" ]; then
+    echo -e "${GREEN}Starting glass-monitor with --region $REGION_ARG ${EXTRA_ARGS[*]}${RESET}"
+    "$VENV" "$SERVER" --region "$REGION_ARG" --no-monitor --port "$PORT" "${EXTRA_ARGS[@]}" &
+else
+    echo -e "${GREEN}Starting glass-monitor with ${EXTRA_ARGS[*]}${RESET}"
+    "$VENV" "$SERVER" --no-monitor --port "$PORT" "${EXTRA_ARGS[@]}" &
+fi
 SERVER_PID=$!
 
 sleep 1

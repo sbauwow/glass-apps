@@ -17,8 +17,8 @@ WIDTH, HEIGHT = 640, 360
 BOUNDARY = b"frame"
 
 
-def find_primary_monitor():
-    """Find the largest monitor and return its geometry."""
+def list_monitors():
+    """Parse all monitors from xrandr. Returns list of (w, h, x, y, name)."""
     result = subprocess.run(
         ["xrandr", "--listmonitors"], capture_output=True, text=True
     )
@@ -39,9 +39,30 @@ def find_primary_monitor():
     if not monitors:
         print("No monitors found via xrandr", file=sys.stderr)
         sys.exit(1)
-    # Return largest by pixel count
+    return monitors
+
+
+def find_primary_monitor():
+    """Find the largest monitor and return its geometry."""
+    monitors = list_monitors()
     monitors.sort(key=lambda m: m[0] * m[1], reverse=True)
     return monitors[0]
+
+
+def find_monitor_by_name(name):
+    """Find a monitor by name (case-insensitive). Returns (w, h, x, y, name) or None."""
+    for mon in list_monitors():
+        if mon[4].lower() == name.lower():
+            return mon
+    return None
+
+
+def get_virtual_screen_bounds():
+    """Get the bounding box of the entire virtual screen."""
+    monitors = list_monitors()
+    max_x = max(m[2] + m[0] for m in monitors)
+    max_y = max(m[3] + m[1] for m in monitors)
+    return max_x, max_y
 
 
 def setup_virtual_monitor(region):
@@ -180,6 +201,12 @@ async def main():
         default="quarter",
         help="Capture mode: full (scale entire display), quarter (640x360 1:1), half (480x270 scaled up), zoom (320x180 scaled up)",
     )
+    parser.add_argument(
+        "--display",
+        type=str,
+        default=None,
+        help="Capture an entire display by name (e.g. DSI-1, DP-1-1). Scales to 640x360.",
+    )
     args = parser.parse_args()
 
     region = None
@@ -187,44 +214,68 @@ async def main():
         parts = args.region.split(",")
         region = (int(parts[0]), int(parts[1]))
 
-    if not args.no_monitor:
+    # --display mode: capture the entire named display, scaled to 640x360
+    if args.display:
+        mon = find_monitor_by_name(args.display)
+        if not mon:
+            available = [m[4] for m in list_monitors()]
+            print(f"Display '{args.display}' not found. Available: {', '.join(available)}", file=sys.stderr)
+            sys.exit(1)
+        mw, mh, mx, my, mname = mon
+        x, y = mx, my
+        src_w, src_h = mw, mh
+        print(f"Display: {mname} ({mw}x{mh} at +{mx}+{my})")
+    elif not args.no_monitor:
         x, y = setup_virtual_monitor(region)
         atexit.register(cleanup_virtual_monitor)
-    elif region:
-        x, y = region
-    else:
-        # Default: bottom-right of primary
-        w, h, mx, my, _ = find_primary_monitor()
-        x = mx + w - WIDTH
-        y = my + h - HEIGHT
-
-    # Determine capture source size based on mode
-    if args.mode == "full":
-        if region:
-            src_w, src_h = WIDTH, HEIGHT
-        else:
-            pw, ph, px, py, _ = find_primary_monitor()
-            x, y = px, py
-            src_w, src_h = pw, ph
-    elif args.mode == "zoom":
-        src_w, src_h = 320, 180
-        if not region:
-            pw, ph, px, py, _ = find_primary_monitor()
-            x = px
-            y = py + ph - 180 - 50
-    elif args.mode == "half":
-        src_w, src_h = 480, 270
-        if not region:
-            pw, ph, px, py, _ = find_primary_monitor()
-            x = px
-            y = py + ph - 270 - 50
-    else:
-        # quarter: capture 640x360 (default)
         src_w, src_h = WIDTH, HEIGHT
-        if not region:
-            pw, ph, px, py, _ = find_primary_monitor()
-            x = px
-            y = py + ph - HEIGHT
+    else:
+        if region:
+            x, y = region
+        else:
+            # Default: bottom-right of primary
+            w, h, mx, my, _ = find_primary_monitor()
+            x = mx + w - WIDTH
+            y = my + h - HEIGHT
+
+        # Determine capture source size based on mode
+        if args.mode == "full":
+            if region:
+                src_w, src_h = WIDTH, HEIGHT
+            else:
+                pw, ph, px, py, _ = find_primary_monitor()
+                x, y = px, py
+                src_w, src_h = pw, ph
+        elif args.mode == "zoom":
+            src_w, src_h = 320, 180
+            if not region:
+                pw, ph, px, py, _ = find_primary_monitor()
+                x = px
+                y = py + ph - 180 - 50
+        elif args.mode == "half":
+            src_w, src_h = 480, 270
+            if not region:
+                pw, ph, px, py, _ = find_primary_monitor()
+                x = px
+                y = py + ph - 270 - 50
+        else:
+            # quarter: capture 640x360 (default)
+            src_w, src_h = WIDTH, HEIGHT
+            if not region:
+                pw, ph, px, py, _ = find_primary_monitor()
+                x = px
+                y = py + ph - HEIGHT
+
+    # Clamp capture region to virtual screen bounds to prevent XGetImage() crash
+    vw, vh = get_virtual_screen_bounds()
+    if x + src_w > vw:
+        old_x = x
+        x = max(0, vw - src_w)
+        print(f"Warning: Clamped X from {old_x} to {x} (virtual screen width: {vw})")
+    if y + src_h > vh:
+        old_y = y
+        y = max(0, vh - src_h)
+        print(f"Warning: Clamped Y from {old_y} to {y} (virtual screen height: {vh})")
 
     print(f"Mode: {args.mode}")
     print(f"Capturing region: ({x}, {y}) {src_w}x{src_h} -> {WIDTH}x{HEIGHT}")

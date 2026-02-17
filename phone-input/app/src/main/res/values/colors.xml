@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#FF121212</color>
+    <color name="surface">#FF1E1E1E</color>
+    <color name="accent">#FF4FC3F7</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FF888888</color>
+    <color name="btn_dark">#FF444444</color>
+    <color name="btn_darker">#FF333333</color>
+    <color name="touchpad_bg">#FF2A2A2A</color>
+    <color name="touchpad_touch">#334FC3F7</color>
+</resources>

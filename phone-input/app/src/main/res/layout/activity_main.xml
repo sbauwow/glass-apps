@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark"
+    android:orientation="vertical"
+    android:keepScreenOn="true">
+
+    <!-- Status bar -->
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="STARTING..."
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp" />
+
+    <!-- Touchpad area -->
+    <com.phoneinput.TouchpadView
+        android:id="@+id/touchpad"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_margin="8dp"
+        android:background="@color/touchpad_bg" />
+
+    <!-- D-Pad -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="170dp"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btn_up"
+            android:layout_width="72dp"
+            android:layout_height="52dp"
+            android:layout_centerHorizontal="true"
+            android:layout_above="@+id/btn_ok"
+            android:text="\u25B2"
+            android:textSize="20sp"
+            android:textColor="@color/text_primary"
+            android:background="@android:color/transparent" />
+
+        <Button
+            android:id="@+id/btn_left"
+            android:layout_width="72dp"
+            android:layout_height="52dp"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/btn_ok"
+            android:text="\u25C0"
+            android:textSize="20sp"
+            android:textColor="@color/text_primary"
+            android:background="@android:color/transparent" />
+
+        <Button
+            android:id="@+id/btn_ok"
+            android:layout_width="72dp"
+            android:layout_height="52dp"
+            android:layout_centerInParent="true"
+            android:text="OK"
+            android:textSize="16sp"
+            android:textColor="#000000"
+            android:backgroundTint="@color/accent"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btn_right"
+            android:layout_width="72dp"
+            android:layout_height="52dp"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/btn_ok"
+            android:text="\u25B6"
+            android:textSize="20sp"
+            android:textColor="@color/text_primary"
+            android:background="@android:color/transparent" />
+
+        <Button
+            android:id="@+id/btn_down"
+            android:layout_width="72dp"
+            android:layout_height="52dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/btn_ok"
+            android:text="\u25BC"
+            android:textSize="20sp"
+            android:textColor="@color/text_primary"
+            android:background="@android:color/transparent" />
+
+    </RelativeLayout>
+
+    <!-- System buttons row: BACK | HOME | MENU | KB -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="4dp">
+
+        <Button
+            android:id="@+id/btn_back"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="2dp"
+            android:text="BACK"
+            android:textSize="12sp"
+            android:textColor="@color/text_primary"
+            android:backgroundTint="@color/btn_dark" />
+
+        <Button
+            android:id="@+id/btn_home"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:text="HOME"
+            android:textSize="12sp"
+            android:textColor="@color/text_primary"
+            android:backgroundTint="@color/btn_dark" />
+
+        <Button
+            android:id="@+id/btn_menu"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:text="MENU"
+            android:textSize="12sp"
+            android:textColor="@color/text_primary"
+            android:backgroundTint="@color/btn_dark" />
+
+        <Button
+            android:id="@+id/btn_keyboard"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:layout_marginStart="2dp"
+            android:text="\u2328 KB"
+            android:textSize="12sp"
+            android:textColor="#000000"
+            android:backgroundTint="@color/accent" />
+
+    </LinearLayout>
+
+    <!-- Hidden EditText for keyboard capture -->
+    <EditText
+        android:id="@+id/hidden_edit"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:background="@null"
+        android:textColor="@android:color/transparent"
+        android:cursorVisible="false"
+        android:inputType="text"
+        android:importantForAutofill="no"
+        android:imeOptions="actionNone" />
+
+</LinearLayout>

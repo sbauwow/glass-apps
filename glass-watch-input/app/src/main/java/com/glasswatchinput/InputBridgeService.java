@@ -33,11 +33,19 @@ public class InputBridgeService extends AccessibilityService implements BleManag
     private static final String TAG = "InputBridge";
     private static final String FIFO_PATH = "/data/local/tmp/keybridge";
 
+    private static final int SCREEN_W = 640;
+    private static final int SCREEN_H = 360;
+
     private BleManager bleManager;
     private HandlerThread inputThread;
     private Handler inputHandler;
     private Handler mainHandler;
     private OutputStream fifoOut;
+
+    private int cursorX = SCREEN_W / 2;
+    private int cursorY = SCREEN_H / 2;
+    private boolean dragging = false;
+    private int dragStartX, dragStartY;
 
     @Override
     public void onServiceConnected() {
@@ -110,6 +118,14 @@ public class InputBridgeService extends AccessibilityService implements BleManag
             handleRotary(value);
         } else if (type == BleManager.TYPE_KEY) {
             handleKey(value, action);
+        } else if (type == BleManager.TYPE_TOUCH_MOVE) {
+            handleTouchMove(value, action);
+        } else if (type == BleManager.TYPE_TOUCH_TAP) {
+            handleTouchTap();
+        } else if (type == BleManager.TYPE_TOUCH_DOWN) {
+            handleTouchDown();
+        } else if (type == BleManager.TYPE_TOUCH_UP) {
+            handleTouchUp();
         }
     }
 
@@ -173,6 +189,50 @@ public class InputBridgeService extends AccessibilityService implements BleManag
         }
     }
 
+    private void handleTouchMove(byte dx, byte dy) {
+        cursorX = Math.max(0, Math.min(SCREEN_W - 1, cursorX + dx));
+        cursorY = Math.max(0, Math.min(SCREEN_H - 1, cursorY + dy));
+    }
+
+    private void handleTouchTap() {
+        injectCommand("tap " + cursorX + " " + cursorY);
+    }
+
+    private void handleTouchDown() {
+        dragging = true;
+        dragStartX = cursorX;
+        dragStartY = cursorY;
+    }
+
+    private void handleTouchUp() {
+        if (dragging) {
+            dragging = false;
+            injectCommand("swipe " + dragStartX + " " + dragStartY + " " + cursorX + " " + cursorY + " 200");
+        }
+    }
+
+    private void injectCommand(final String command) {
+        inputHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (fifoOut == null) {
+                    openFifo();
+                }
+                if (fifoOut != null) {
+                    try {
+                        fifoOut.write((command + "\n").getBytes());
+                        fifoOut.flush();
+                        Log.d(TAG, "FIFO: " + command);
+                    } catch (Exception e) {
+                        Log.w(TAG, "FIFO write failed: " + e.getMessage());
+                        try { fifoOut.close(); } catch (Exception e2) { /* ignore */ }
+                        fifoOut = null;
+                    }
+                }
+            }
+        });
+    }
+
     private void globalAction(final int action) {
         mainHandler.post(new Runnable() {
             @Override
@@ -184,28 +244,7 @@ public class InputBridgeService extends AccessibilityService implements BleManag
     }
 
     private void injectKey(final int keyCode) {
-        inputHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (fifoOut == null) {
-                    openFifo();
-                }
-                if (fifoOut != null) {
-                    try {
-                        fifoOut.write((keyCode + "\n").getBytes());
-                        fifoOut.flush();
-                        Log.d(TAG, "FIFO keyevent " + keyCode);
-                    } catch (Exception e) {
-                        Log.w(TAG, "FIFO write failed: " + e.getMessage());
-                        try { fifoOut.close(); } catch (Exception e2) { /* ignore */ }
-                        fifoOut = null;
-                        // Try to reopen on next call
-                    }
-                } else {
-                    Log.w(TAG, "No FIFO available for keyevent " + keyCode);
-                }
-            }
-        });
+        injectCommand("keyevent " + keyCode);
     }
 
     @Override

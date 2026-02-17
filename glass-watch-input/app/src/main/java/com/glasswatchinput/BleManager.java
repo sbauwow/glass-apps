@@ -37,9 +37,13 @@ public class BleManager {
 
     private static final long SCAN_COLLECT_MS = 5000;
 
-    public static final byte TYPE_KEY     = 0x01;
-    public static final byte TYPE_GESTURE = 0x02;
-    public static final byte TYPE_ROTARY  = 0x03;
+    public static final byte TYPE_KEY        = 0x01;
+    public static final byte TYPE_GESTURE    = 0x02;
+    public static final byte TYPE_ROTARY     = 0x03;
+    public static final byte TYPE_TOUCH_MOVE = 0x04;
+    public static final byte TYPE_TOUCH_TAP  = 0x05;
+    public static final byte TYPE_TOUCH_DOWN = 0x06;
+    public static final byte TYPE_TOUCH_UP   = 0x07;
 
     public static final byte GESTURE_TAP        = 1;
     public static final byte GESTURE_LONG_PRESS = 2;

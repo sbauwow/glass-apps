@@ -123,7 +123,12 @@ adb shell mount -o rw,remount /system 2>/dev/null || true
 adb shell "cat > $BOOT_SCRIPT << 'BOOTSCRIPT'
 #!/system/bin/sh
 # Key bridge daemon for glass-watch-input
-# Reads key codes from FIFO and injects them via 'input keyevent' as root.
+# Reads commands from FIFO and injects them via 'input' as root.
+# Supported commands:
+#   keyevent <code>                    - inject key event
+#   tap <x> <y>                        - inject tap at coordinates
+#   swipe <x1> <y1> <x2> <y2> <dur>   - inject swipe gesture
+#   <number>                           - legacy: treated as keyevent
 # Started on boot by init (flash_recovery service).
 FIFO=/data/local/tmp/keybridge
 if [ ! -p \$FIFO ]; then
@@ -132,8 +137,13 @@ if [ ! -p \$FIFO ]; then
 fi
 (
     while true; do
-        while read code; do
-            input keyevent \$code
+        while read line; do
+            case \$line in
+                keyevent\\ *)  input \$line ;;
+                tap\\ *)       input \$line ;;
+                swipe\\ *)     input \$line ;;
+                *)             input keyevent \$line ;;
+            esac
         done < \$FIFO
     done
 ) &

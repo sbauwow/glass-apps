@@ -9,12 +9,16 @@ import android.content.SharedPreferences;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
 /**
  * Fullscreen MJPEG display for Google Glass Explorer Edition.
@@ -72,22 +76,36 @@ public class MainActivity extends Activity implements MjpegView.Listener {
         });
 
         // Determine host: intent extra → saved preference → localhost
-        String host = null;
+        // Always probe localhost first (adb reverse), fall back to saved host
+        String intentHost = null;
         if (getIntent() != null) {
-            host = getIntent().getStringExtra("host");
+            intentHost = getIntent().getStringExtra("host");
         }
-        if (host != null && !host.isEmpty()) {
-            // Save for next launch
+        if (intentHost != null && !intentHost.isEmpty()) {
             getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                    .edit().putString(PREF_HOST, host).apply();
-        } else {
-            host = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                    .getString(PREF_HOST, "localhost");
+                    .edit().putString(PREF_HOST, intentHost).apply();
         }
+        final String savedHost = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(PREF_HOST, "localhost");
 
-        String url = "http://" + host + ":" + DEFAULT_PORT;
-        mjpegView.setStreamUrl(url);
         statusText.setText("CONNECTING");
+
+        // Probe localhost (adb reverse) on background thread, then set URL
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String host = resolveHost(savedHost);
+                final String url = "http://" + host + ":" + DEFAULT_PORT;
+                Log.d("GlassDisplay", "Using host: " + host + " (url: " + url + ")");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mjpegView.setStreamUrl(url);
+                        mjpegView.startStream();
+                    }
+                });
+            }
+        }).start();
 
         // Gesture detector
         gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
@@ -120,7 +138,7 @@ public class MainActivity extends Activity implements MjpegView.Listener {
     @Override
     protected void onResume() {
         super.onResume();
-        mjpegView.startStream();
+        // startStream() is called after host probe in onCreate
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
     }
 
@@ -196,6 +214,24 @@ public class MainActivity extends Activity implements MjpegView.Listener {
     @Override
     public void onBackPressed() {
         exitApp();
+    }
+
+    /**
+     * Try localhost first (adb reverse tunnel). If it connects, use it.
+     * Otherwise fall back to the saved/provided host.
+     */
+    private String resolveHost(String fallbackHost) {
+        if ("localhost".equals(fallbackHost)) return "localhost";
+        try {
+            Socket sock = new Socket();
+            sock.connect(new InetSocketAddress("127.0.0.1", DEFAULT_PORT), 1500);
+            sock.close();
+            Log.d("GlassDisplay", "localhost:8080 reachable (adb reverse)");
+            return "localhost";
+        } catch (Exception e) {
+            Log.d("GlassDisplay", "localhost:8080 unreachable, using " + fallbackHost);
+            return fallbackHost;
+        }
     }
 
     private void exitApp() {

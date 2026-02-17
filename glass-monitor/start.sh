@@ -27,18 +27,16 @@ fi
 # --- Cleanup ---
 
 # Kill any existing glass_monitor processes
-if pgrep -f "glass_monitor.py" > /dev/null 2>&1; then
-    echo "Killing old glass-monitor processes..."
-    pkill -f "glass_monitor.py" 2>/dev/null || true
-    sleep 1
-fi
+echo "Killing old glass-monitor processes..."
+pkill -9 -f "glass_monitor.py" 2>/dev/null || true
+sleep 0.5
 
-# Kill anything else on port 8080
+# Ensure port is actually free
 PID=$(ss -tlnp 2>/dev/null | grep ":$PORT " | grep -oP 'pid=\K[0-9]+' | head -1)
 if [ -n "$PID" ]; then
     echo "Killing process $PID on port $PORT..."
-    kill "$PID" 2>/dev/null || true
-    sleep 1
+    kill -9 "$PID" 2>/dev/null || true
+    sleep 0.5
 fi
 
 # Remove stale $ADB reverse
@@ -46,8 +44,10 @@ $ADB reverse --remove tcp:$PORT 2>/dev/null || true
 
 # --- Start ---
 
+ADB_REVERSE=false
 if $ADB reverse tcp:$PORT tcp:$PORT 2>/dev/null; then
     echo "$ADB reverse tcp:$PORT set up"
+    ADB_REVERSE=true
 else
     echo "$ADB reverse failed (no device?) — streaming on LAN only"
 fi
@@ -61,8 +61,17 @@ sleep 1
 if kill -0 "$SERVER_PID" 2>/dev/null; then
     echo ""
     echo "Glass monitor running (pid $SERVER_PID, port $PORT, mode $MODE)"
-    echo "Launch on Glass:  $ADB shell am start -n com.glassdisplay/.MainActivity"
     echo "Stop:             kill $SERVER_PID"
+    # Auto-launch glass-display
+    if $ADB_REVERSE; then
+        # USB: use localhost via adb reverse tunnel
+        $ADB shell am start -n com.glassdisplay/.MainActivity --es host localhost 2>/dev/null \
+            && echo "Launched glass-display on Glass (USB)"
+    else
+        # WiFi: user must launch manually with host IP
+        HOST_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+        echo "Launch on Glass:  $ADB shell am start -n com.glassdisplay/.MainActivity --es host $HOST_IP"
+    fi
     wait "$SERVER_PID"
 else
     echo "Server failed to start. Check logs above."

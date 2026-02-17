@@ -12,9 +12,9 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 
 | App | Description | Network | Companion Required |
 |-----|-------------|---------|-------------------|
+| [glass-launcher](#glass-launcher) | Custom home screen with gesture navigation | None | No |
 | [glass-display](#glass-display) | Fullscreen MJPEG stream viewer | WiFi/USB | No (connects to any MJPEG source) |
 | [glass-kill](#glass-kill) | Kill all non-essential background processes | None | No |
-| [glass-launcher](#glass-launcher) | Custom home screen with gesture navigation | None | No |
 | [glass-monitor](#glass-monitor) | Desktop screen capture → MJPEG stream | WiFi/USB | Standalone Python server |
 | [glass-pomodoro](#glass-pomodoro) | Pomodoro timer (15min work / 5min break) | None | No |
 | [glass-stream](#glass-stream) | Camera MJPEG streaming server | WiFi/USB | Optional - Python viewer & shell scripts |
@@ -33,6 +33,26 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-flipper](#glass-flipper) | Flipper Zero screen mirror via USB OTG | USB OTG | No (direct USB CDC serial) |
 | [glass-watch-input](#glass-watch-input) | BLE input bridge receiver — injects watch events as keys | Bluetooth LE | Yes — watch-input on Galaxy Watch |
 | [watch-input](#watch-input) | Galaxy Watch D-pad remote control for Glass | Bluetooth LE | Yes — glass-watch-input on Glass |
+
+---
+
+## glass-launcher
+
+Custom home screen launcher that displays installed apps in a horizontally scrolling carousel. Replaces the stock Glass launcher with gesture-driven navigation.
+
+### Features
+
+- Horizontal app carousel with visual selection highlight
+- Status bar with date/time and battery percentage
+- Tap to launch, swipe left/right to browse, swipe down to dismiss
+- Two-finger tap and long-press gesture support
+- Camera button remapped to Home via accessibility service (`ButtonRemapService`): short press opens the camera as normal, long press returns to the launcher
+- Pinned apps appear first (configurable in source)
+- **System dialog navigator**: Detects system dialogs (USB permissions, install confirmations, etc.) and shows a touchpad-navigable overlay with cyan selection highlight. Swipe left/right to cycle elements, tap or camera button to click. Solves the problem of Glass's touchpad being unable to interact with standard Android dialogs.
+
+**Permissions:** `SYSTEM_ALERT_WINDOW`, `BIND_ACCESSIBILITY_SERVICE`
+
+No network or companion required — runs entirely on-device.
 
 ---
 
@@ -70,26 +90,6 @@ adb shell am start -n com.glasskill/.MainActivity
 ```
 
 No network or companion required.
-
----
-
-## glass-launcher
-
-Custom home screen launcher that displays installed apps in a horizontally scrolling carousel. Replaces the stock Glass launcher with gesture-driven navigation.
-
-### Features
-
-- Horizontal app carousel with visual selection highlight
-- Status bar with date/time and battery percentage
-- Tap to launch, swipe left/right to browse, swipe down to dismiss
-- Two-finger tap and long-press gesture support
-- Camera button remapped to Home via accessibility service (`ButtonRemapService`): short press opens the camera as normal, long press returns to the launcher
-- Pinned apps appear first (configurable in source)
-- **System dialog navigator**: Detects system dialogs (USB permissions, install confirmations, etc.) and shows a touchpad-navigable overlay with cyan selection highlight. Swipe left/right to cycle elements, tap or camera button to click. Solves the problem of Glass's touchpad being unable to interact with standard Android dialogs.
-
-**Permissions:** `SYSTEM_ALERT_WINDOW`, `BIND_ACCESSIBILITY_SERVICE`
-
-No network or companion required — runs entirely on-device.
 
 ---
 

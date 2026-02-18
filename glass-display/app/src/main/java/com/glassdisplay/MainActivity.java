@@ -138,7 +138,7 @@ public class MainActivity extends Activity implements MjpegView.Listener {
     @Override
     protected void onResume() {
         super.onResume();
-        // startStream() is called after host probe in onCreate
+        mjpegView.startStream();
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
     }
 
@@ -221,7 +221,6 @@ public class MainActivity extends Activity implements MjpegView.Listener {
      * Otherwise fall back to the saved/provided host.
      */
     private String resolveHost(String fallbackHost) {
-        if ("localhost".equals(fallbackHost)) return "localhost";
         try {
             Socket sock = new Socket();
             sock.connect(new InetSocketAddress("127.0.0.1", DEFAULT_PORT), 1500);

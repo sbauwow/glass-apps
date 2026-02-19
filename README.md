@@ -31,6 +31,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [glass-bike-hud](#glass-bike-hud) | Biking HUD with heart rate, speed, distance | Bluetooth LE | Yes - watch-bike-hud on Galaxy Watch |
 | [watch-bike-hud](#watch-bike-hud) | Galaxy Watch sensor broadcaster for glass-bike-hud | Bluetooth LE | Yes - glass-bike-hud on Glass |
 | [glass-flipper](#glass-flipper) | Flipper Zero screen mirror via USB OTG | USB OTG | No (direct USB CDC serial) |
+| [glass-music](#glass-music) | Stream Linux system audio to Glass over Bluetooth | Bluetooth | Yes — Python streaming client on Linux |
 | [glass-watch-input](#glass-watch-input) | BLE input bridge receiver — injects watch events as keys | Bluetooth LE | Yes — watch-input on Galaxy Watch |
 | [watch-input](#watch-input) | Galaxy Watch D-pad remote control for Glass | Bluetooth LE | Yes — glass-watch-input on Glass |
 
@@ -663,6 +664,42 @@ After checking "Use by default", future connections are automatic.
 **Gestures:** Swipe down or back to exit.
 
 No companion required — connects directly via USB.
+
+---
+
+## glass-music
+
+Streams Linux system audio to Glass's bone conduction speaker over Bluetooth RFCOMM. A Python client captures all system audio output via PulseAudio (`parec`) and streams 44.1kHz mono 16-bit PCM to Glass in real-time (~706 kbps). Glass pre-fills the AudioTrack buffer before starting playback to eliminate underruns.
+
+**Permissions:** `BLUETOOTH`, `BLUETOOTH_ADMIN`, `WAKE_LOCK`
+
+### Wire Protocol
+
+Length-prefixed typed frames: `[4-byte BE length][1-byte type][body]`
+
+| Type | Direction | Content |
+|------|-----------|---------|
+| `0x01` CONFIG | Linux→Glass | JSON: sample rate, channels, encoding |
+| `0x02` AUDIO | Linux→Glass | Raw PCM bytes (4096-byte chunks) |
+| `0x03` COMMAND | Glass→Linux | JSON: pause/resume |
+| `0x04` HEARTBEAT | Both | No body |
+
+### Usage
+
+```bash
+# Stream system audio to Glass
+python3 linux/glass_music.py <glass-mac> -c 5
+
+# Auto-detect channel (slower)
+python3 linux/glass_music.py <glass-mac>
+
+# Custom audio source
+python3 linux/glass_music.py <glass-mac> -d <pulse-monitor-source>
+```
+
+**Controls:** Tap to pause/resume. Swipe down to exit. Long-press for discoverability.
+
+**Linux requirements:** Python 3, PulseAudio (`parec`). Optional PyBluez for SDP lookup.
 
 ---
 

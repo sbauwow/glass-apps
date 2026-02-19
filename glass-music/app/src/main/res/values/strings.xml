@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GlassMusic</string>
+    <string name="status_waiting">WAITING FOR CONNECTION</string>
+    <string name="status_connected">CONNECTED</string>
+    <string name="status_playing">PLAYING</string>
+    <string name="status_paused">PAUSED</string>
+</resources>

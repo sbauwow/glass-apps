@@ -4,8 +4,8 @@ import socket, struct, json, sys, time, threading, signal, subprocess
 
 SERVICE_UUID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 RECONNECT_DELAY = 3
-CHUNK_SIZE = 4096  # ~46ms at 44.1kHz mono 16-bit
-SAMPLE_RATE = 44100
+CHUNK_SIZE = 4096   # ~93ms at 22.05kHz mono 16-bit — small chunks for smoother flow
+SAMPLE_RATE = 22050
 CHANNELS = 1
 HEARTBEAT_INTERVAL = 15
 

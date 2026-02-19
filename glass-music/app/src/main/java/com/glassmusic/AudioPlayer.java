@@ -5,16 +5,20 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.util.Log;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 public class AudioPlayer {
 
     private static final String TAG = "AudioPlayer";
-    private static final int BUFFER_MULTIPLIER = 4;
+    private static final int QUEUE_CAPACITY = 200;
 
     private AudioTrack track;
-    private int bufferSize;
-    private int bytesWritten;
     private volatile boolean paused;
-    private volatile boolean started;
+    private volatile boolean running;
+    private ArrayBlockingQueue<byte[]> queue;
+    private Thread writerThread;
+    private int bufferSize;
 
     public boolean configure(int sampleRate, int channels) {
         stop();
@@ -30,7 +34,8 @@ public class AudioPlayer {
             return false;
         }
 
-        bufferSize = minBuf * BUFFER_MULTIPLIER;
+        // Large buffer for Bluetooth jitter absorption
+        bufferSize = minBuf * 16;
 
         try {
             track = new AudioTrack(
@@ -53,24 +58,64 @@ public class AudioPlayer {
         }
 
         paused = false;
-        started = false;
-        bytesWritten = 0;
-        Log.i(TAG, "Configured: " + sampleRate + "Hz " + channels + "ch, buffer=" + bufferSize);
+        running = true;
+        queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
+
+        // Must call play() before write() on API 19
+        track.play();
+
+        // Pre-fill with silence to create a jitter buffer runway (~1.4s)
+        byte[] silence = new byte[bufferSize];
+        track.write(silence, 0, bufferSize);
+        Log.i(TAG, "Configured: " + sampleRate + "Hz " + channels
+                + "ch, buffer=" + bufferSize + ", silence prefill=FULL");
+
+        // Writer thread drains queue into AudioTrack
+        writerThread = new Thread(() -> {
+            Log.i(TAG, "Writer thread started");
+            long totalBytes = 0;
+            long lastLog = System.currentTimeMillis();
+            int starveCount = 0;
+            while (running) {
+                try {
+                    byte[] chunk = queue.poll(50, TimeUnit.MILLISECONDS);
+                    if (chunk != null && !paused) {
+                        track.write(chunk, 0, chunk.length);
+                        totalBytes += chunk.length;
+                    } else if (chunk == null) {
+                        starveCount++;
+                    }
+                    // Log throughput every 5 seconds
+                    long now = System.currentTimeMillis();
+                    if (now - lastLog >= 5000) {
+                        long elapsed = now - lastLog;
+                        long bps = totalBytes * 1000 / elapsed;
+                        Log.i(TAG, "Writer: " + bps + " bytes/sec, queue=" + queue.size()
+                                + ", starves=" + starveCount);
+                        totalBytes = 0;
+                        starveCount = 0;
+                        lastLog = now;
+                    }
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+            Log.i(TAG, "Writer thread exiting");
+        }, "AudioWriter");
+        writerThread.start();
+
         return true;
     }
 
+    /** Called from RFCOMM read thread. Non-blocking enqueue. */
     public void write(byte[] data, int length) {
-        AudioTrack t = track;
-        if (t != null && !paused) {
-            t.write(data, 0, length);
-            if (!started) {
-                bytesWritten += length;
-                // Start playback once we've pre-filled the buffer
-                if (bytesWritten >= bufferSize) {
-                    t.play();
-                    started = true;
-                    Log.i(TAG, "Playback started after " + bytesWritten + " bytes pre-filled");
-                }
+        if (running && !paused) {
+            byte[] copy = new byte[length];
+            System.arraycopy(data, 0, copy, 0, length);
+            if (!queue.offer(copy)) {
+                // Queue full — drop oldest to keep latency bounded
+                queue.poll();
+                queue.offer(copy);
             }
         }
     }
@@ -79,23 +124,16 @@ public class AudioPlayer {
         paused = true;
         AudioTrack t = track;
         if (t != null) {
-            try {
-                t.pause();
-            } catch (IllegalStateException e) {
-                Log.w(TAG, "Pause failed", e);
-            }
+            try { t.pause(); } catch (IllegalStateException ignored) {}
         }
+        if (queue != null) queue.clear();
     }
 
     public void resume() {
         paused = false;
         AudioTrack t = track;
         if (t != null) {
-            try {
-                t.play();
-            } catch (IllegalStateException e) {
-                Log.w(TAG, "Resume failed", e);
-            }
+            try { t.play(); } catch (IllegalStateException ignored) {}
         }
     }
 
@@ -104,14 +142,21 @@ public class AudioPlayer {
     }
 
     public void stop() {
+        running = false;
         AudioTrack t = track;
         track = null;
         paused = false;
-        started = false;
+        if (writerThread != null) {
+            writerThread.interrupt();
+            try { writerThread.join(1000); } catch (InterruptedException ignored) {}
+            writerThread = null;
+        }
+        if (queue != null) {
+            queue.clear();
+            queue = null;
+        }
         if (t != null) {
-            try {
-                t.stop();
-            } catch (IllegalStateException ignored) {}
+            try { t.stop(); } catch (IllegalStateException ignored) {}
             t.release();
         }
     }

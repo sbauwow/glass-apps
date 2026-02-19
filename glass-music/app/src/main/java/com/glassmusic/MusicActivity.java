@@ -26,6 +26,8 @@ public class MusicActivity extends Activity implements AudioServer.Listener {
     private TextView textTitle;
     private TextView textStatus;
 
+    private volatile boolean playingShown;
+
     // Touch tracking
     private float touchStartX, touchStartY;
     private long touchStartTime;
@@ -72,6 +74,7 @@ public class MusicActivity extends Activity implements AudioServer.Listener {
 
     @Override
     public void onClientConnected(String deviceName, String mac) {
+        playingShown = false;
         if (!wakeLock.isHeld()) wakeLock.acquire();
         runOnUiThread(() -> {
             textStatus.setText(getString(R.string.status_connected) + " - " + deviceName);
@@ -105,17 +108,12 @@ public class MusicActivity extends Activity implements AudioServer.Listener {
     @Override
     public void onAudioChunkReceived(byte[] data, int length) {
         player.write(data, length);
-        // Update UI to PLAYING on first chunk (only if not paused)
-        if (!player.isPaused()) {
+        // Update UI to PLAYING once
+        if (!playingShown && !player.isPaused()) {
+            playingShown = true;
             runOnUiThread(() -> {
-                if (textStatus.getText().toString().startsWith("CONNECTED")
-                        || textStatus.getText().toString().startsWith("PLAYING")) {
-                    // Avoid redundant updates after first one
-                    if (!textStatus.getText().toString().startsWith("PLAYING")) {
-                        textStatus.setText(R.string.status_playing);
-                        textStatus.setTextColor(getResources().getColor(R.color.status_playing));
-                    }
-                }
+                textStatus.setText(R.string.status_playing);
+                textStatus.setTextColor(getResources().getColor(R.color.status_playing));
             });
         }
     }

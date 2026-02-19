@@ -32,12 +32,14 @@ public class AudioServer {
     public static final byte TYPE_AUDIO     = 0x02;
     public static final byte TYPE_COMMAND   = 0x03;
     public static final byte TYPE_HEARTBEAT = 0x04;
+    public static final byte TYPE_METADATA  = 0x05;
 
     public interface Listener {
         void onClientConnected(String deviceName, String mac);
         void onClientDisconnected();
         void onConfigReceived(int sampleRate, int channels);
         void onAudioChunkReceived(byte[] data, int length);
+        void onMetadataReceived(String title, String artist);
         void onError(String error);
         void onListening(int channel);
     }
@@ -218,7 +220,9 @@ public class AudioServer {
                         listener.onAudioChunkReceived(bodyBuf, bodyLen);
                         break;
                     case TYPE_COMMAND:
-                        // Commands from Linux (future use)
+                        break;
+                    case TYPE_METADATA:
+                        handleMetadata(bodyBuf, bodyLen);
                         break;
                     case TYPE_HEARTBEAT:
                         break;
@@ -246,6 +250,18 @@ public class AudioServer {
             listener.onConfigReceived(sampleRate, channels);
         } catch (Exception e) {
             Log.e(TAG, "Invalid config frame", e);
+        }
+    }
+
+    private void handleMetadata(byte[] body, int len) {
+        try {
+            String json = new String(body, 0, len, "UTF-8");
+            JSONObject meta = new JSONObject(json);
+            String title = meta.optString("title", "");
+            String artist = meta.optString("artist", "");
+            listener.onMetadataReceived(title, artist);
+        } catch (Exception e) {
+            Log.e(TAG, "Invalid metadata frame", e);
         }
     }
 

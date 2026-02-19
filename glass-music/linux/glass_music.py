@@ -14,6 +14,7 @@ TYPE_CONFIG    = 0x01
 TYPE_AUDIO     = 0x02
 TYPE_COMMAND   = 0x03
 TYPE_HEARTBEAT = 0x04
+TYPE_METADATA  = 0x05
 
 
 def send_frame(sock, frame_type, body=b""):
@@ -153,6 +154,46 @@ def reader_thread(sock, stop_event, paused_event):
             break
 
 
+def get_mpris_metadata():
+    """Get now-playing metadata from MPRIS D-Bus interface."""
+    try:
+        import dbus
+        bus = dbus.SessionBus()
+        for name in bus.list_names():
+            if name.startswith("org.mpris.MediaPlayer2."):
+                player = bus.get_object(name, "/org/mpris/MediaPlayer2")
+                props = dbus.Interface(player, "org.freedesktop.DBus.Properties")
+                metadata = props.Get("org.mpris.MediaPlayer2.Player", "Metadata")
+                title = str(metadata.get("xesam:title", ""))
+                artists = metadata.get("xesam:artist", [])
+                artist = str(artists[0]) if artists else ""
+                if title:
+                    return {"title": title, "artist": artist}
+    except Exception:
+        pass
+    return None
+
+
+def metadata_thread(sock, stop_event):
+    """Poll MPRIS metadata and send to Glass when it changes."""
+    last_meta = None
+    while not stop_event.is_set():
+        try:
+            time.sleep(3)
+            if stop_event.is_set():
+                break
+            meta = get_mpris_metadata()
+            if meta and meta != last_meta:
+                last_meta = meta
+                body = json.dumps(meta).encode("utf-8")
+                send_frame(sock, TYPE_METADATA, body)
+                print(f"[Metadata] {meta.get('title', '')} - {meta.get('artist', '')}")
+        except (ConnectionError, OSError):
+            break
+        except Exception:
+            pass
+
+
 def heartbeat_thread(sock, stop_event):
     """Send periodic heartbeats."""
     while not stop_event.is_set():
@@ -228,6 +269,10 @@ def stream_session(addr, channel, monitor, sample_rate=SAMPLE_RATE, channels=CHA
             hb = threading.Thread(
                 target=heartbeat_thread, args=(sock, stop), daemon=True)
             hb.start()
+
+            meta = threading.Thread(
+                target=metadata_thread, args=(sock, stop), daemon=True)
+            meta.start()
 
             # Stream audio (blocks until disconnect or stop)
             stream_audio(sock, monitor, stop, paused, sample_rate, channels)

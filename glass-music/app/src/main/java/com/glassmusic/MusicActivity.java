@@ -24,6 +24,7 @@ public class MusicActivity extends Activity implements AudioServer.Listener {
     // UI
     private TextView textIcon;
     private TextView textTitle;
+    private TextView textArtist;
     private TextView textStatus;
 
     private volatile boolean playingShown;
@@ -41,6 +42,7 @@ public class MusicActivity extends Activity implements AudioServer.Listener {
 
         textIcon = (TextView) findViewById(R.id.text_icon);
         textTitle = (TextView) findViewById(R.id.text_title);
+        textArtist = (TextView) findViewById(R.id.text_artist);
         textStatus = (TextView) findViewById(R.id.text_status);
 
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
@@ -88,6 +90,8 @@ public class MusicActivity extends Activity implements AudioServer.Listener {
         player.stop();
         if (wakeLock.isHeld()) wakeLock.release();
         runOnUiThread(() -> {
+            textTitle.setText(R.string.app_name);
+            textArtist.setText("");
             textStatus.setText(R.string.status_waiting);
             textStatus.setTextColor(getResources().getColor(R.color.status_waiting));
             textIcon.setTextColor(getResources().getColor(R.color.text_dim));
@@ -116,6 +120,16 @@ public class MusicActivity extends Activity implements AudioServer.Listener {
                 textStatus.setTextColor(getResources().getColor(R.color.status_playing));
             });
         }
+    }
+
+    @Override
+    public void onMetadataReceived(String title, String artist) {
+        runOnUiThread(() -> {
+            if (title != null && !title.isEmpty()) {
+                textTitle.setText(title);
+            }
+            textArtist.setText(artist != null ? artist : "");
+        });
     }
 
     @Override

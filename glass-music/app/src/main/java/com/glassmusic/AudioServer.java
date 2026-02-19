@@ -9,6 +9,7 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -182,7 +183,7 @@ public class AudioServer {
         listener.onClientConnected(name, mac);
 
         try {
-            InputStream in = socket.getInputStream();
+            InputStream in = new BufferedInputStream(socket.getInputStream(), MAX_FRAME_SIZE);
             outStream = socket.getOutputStream();
 
             // Start heartbeat thread

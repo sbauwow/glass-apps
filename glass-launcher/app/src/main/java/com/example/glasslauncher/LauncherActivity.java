@@ -7,6 +7,10 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -64,6 +68,7 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
     private LinearLayout appContainer;
     private TextView emptyText;
     private TextView dateTimeText;
+    private TextView wifiText;
     private TextView batteryText;
     private TextView setupBanner;
 
@@ -107,6 +112,7 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
         appContainer = (LinearLayout) findViewById(R.id.app_container);
         emptyText = (TextView) findViewById(R.id.empty_text);
         dateTimeText = (TextView) findViewById(R.id.date_time_text);
+        wifiText = (TextView) findViewById(R.id.wifi_text);
         batteryText = (TextView) findViewById(R.id.battery_text);
         setupBanner = (TextView) findViewById(R.id.setup_banner);
 
@@ -147,6 +153,33 @@ public class LauncherActivity extends Activity implements GlassGestureHandler.Ge
     private void updateStatus() {
         dateTimeText.setText(dateTimeFormat.format(new Date()));
 
+        // WiFi status
+        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+        if (wifiManager != null && wifiManager.isWifiEnabled()) {
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
+                String ssid = wifiInfo.getSSID();
+                if (ssid != null) {
+                    ssid = ssid.replace("\"", "");
+                }
+                int rssi = wifiInfo.getRssi();
+                int bars = WifiManager.calculateSignalLevel(rssi, 4);
+                String signal;
+                switch (bars) {
+                    case 0: signal = "\u2581"; break;
+                    case 1: signal = "\u2582"; break;
+                    case 2: signal = "\u2584"; break;
+                    default: signal = "\u2586"; break;
+                }
+                wifiText.setText(ssid + " " + signal);
+            } else {
+                wifiText.setText("No WiFi");
+            }
+        } else {
+            wifiText.setText("WiFi off");
+        }
+
+        // Battery status
         Intent batteryStatus = registerReceiver(null,
                 new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         if (batteryStatus != null) {

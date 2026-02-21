@@ -24,6 +24,14 @@
             android:textSize="@dimen/status_text_size" />
 
         <TextView
+            android:id="@+id/wifi_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="12dp"
+            android:textColor="#AAFFFFFF"
+            android:textSize="@dimen/status_text_size" />
+
+        <TextView
             android:id="@+id/battery_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

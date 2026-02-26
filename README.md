@@ -32,6 +32,7 @@ All Android apps target `minSdk 19` / `targetSdk 19`, use Java 11, AGP 8.9.0, an
 | [watch-bike-hud](#watch-bike-hud) | Galaxy Watch sensor broadcaster for glass-bike-hud | Bluetooth LE | Yes - glass-bike-hud on Glass |
 | [glass-flipper](#glass-flipper) | Flipper Zero screen mirror via USB OTG | USB OTG | No (direct USB CDC serial) |
 | [glass-music](#glass-music) | Stream Linux system audio to Glass over Bluetooth | Bluetooth | Yes — Python streaming client on Linux |
+| [glass-obd](#glass-obd) | OBD2 car telemetry HUD with 4 swipeable data pages | Bluetooth | No (connects to ELM327 dongle) |
 | [glass-watch-input](#glass-watch-input) | BLE input bridge receiver — injects watch events as keys | Bluetooth LE | Yes — watch-input on Galaxy Watch |
 | [watch-input](#watch-input) | Galaxy Watch D-pad remote control for Glass | Bluetooth LE | Yes — glass-watch-input on Glass |
 
@@ -311,6 +312,62 @@ Cell full: 4.2V / Cell empty: 3.0V
 ```
 
 No companion required — connects directly to the VESC BLE dongle.
+
+---
+
+## glass-obd
+
+Real-time car telemetry heads-up display. Connects to an ELM327 OBD2 Bluetooth dongle over classic Bluetooth RFCOMM and streams live engine data across four swipeable pages.
+
+**Permissions:** `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_COARSE_LOCATION`, `WAKE_LOCK`
+
+### Pages (swipe left/right)
+
+| Page | Hero Metric | Supporting Data |
+|------|-------------|-----------------|
+| **Drive** | Speed (mph) | RPM, throttle %, coolant temp, engine load, voltage |
+| **Engine** | RPM | Speed, throttle %, coolant temp, intake air temp, timing advance, MAF rate |
+| **Fuel** | Fuel level (%) | Fuel rate (L/h), fuel system status, fuel pressure, short/long-term fuel trims |
+| **Diag** | DTC count | MIL status, engine runtime, distance since codes cleared, voltage |
+
+### OBD2 PIDs
+
+Polls up to 17 PIDs depending on vehicle support: 01 (monitor status), 03 (fuel system), 04 (load), 05 (coolant), 06/07 (fuel trims), 0A (fuel pressure), 0C (RPM), 0D (speed), 0E (timing), 0F (intake air), 10 (MAF), 11 (throttle), 1F (runtime), 2F (fuel level), 31 (distance since clear), 42 (voltage), 5E (fuel rate). Supported PIDs are auto-detected via 0100/0120/0140 queries.
+
+### ELM327 Init Sequence
+
+`ATZ` → `ATE0` → `ATL0` → `ATS0` → `ATSP0` (auto protocol detect)
+
+### Features
+
+- Auto-discovers ELM327 dongles (filters by name: OBD, ELM, VEEPEAK, KONNWEI, V-LINK, SCAN)
+- Auto-pairs with PIN 1234 (standard ELM327 PIN)
+- 3-strategy RFCOMM fallback: secure → insecure → reflection channel 1
+- Trusted device persistence (auto-reconnects across app restarts)
+- ECU detection with retry — shows "NO ECU — IGNITION OFF?" when car isn't running
+- Color-coded warnings: speed (white→yellow@60→red@80 mph), RPM (white→yellow@4000→red@5500), coolant (dim→yellow@200→red@220°F), fuel level (white→yellow@25→red@10%), fuel trims (dim→yellow@10→red@20%)
+- Page indicator dots and label at bottom of screen
+
+### Controls
+
+| Input | Action |
+|-------|--------|
+| Swipe left/right | Switch page |
+| Tap | Reconnect |
+| Long-press | Exit |
+| Swipe down | Exit |
+| [X] tap | Exit |
+| [X] long-press | Forget trusted adapters + rescan |
+| Back / Escape | Exit |
+
+### Usage
+
+```bash
+adb install -r apks/glass-obd.apk
+adb shell am start -n com.glassobd/.MainActivity
+```
+
+No companion required — connects directly to any ELM327 OBD2 Bluetooth dongle.
 
 ---
 

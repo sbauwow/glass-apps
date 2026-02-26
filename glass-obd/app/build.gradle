@@ -1,0 +1,30 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.glassobd'
+    compileSdk 28
+
+    defaultConfig {
+        applicationId "com.glassobd"
+        minSdk 19           // Glass Explorer Edition GDK base
+        targetSdk 22        // Android 5.1.1 — no runtime permissions needed
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+}

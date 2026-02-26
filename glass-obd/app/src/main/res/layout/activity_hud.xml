@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Glass display: 640x360. 4-page HUD with swipe left/right navigation.
+    Page 1: Drive   — Speed hero, RPM, Throttle, Coolant, Load, Voltage
+    Page 2: Engine  — RPM hero, Speed, Throttle, Coolant, Intake, Timing, MAF
+    Page 3: Fuel    — Fuel Level hero, Rate, System, Pressure, STFT, LTFT
+    Page 4: Diag    — DTC Count hero, Runtime, MIL, Distance, Voltage
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/hud_bg">
+
+    <!-- ============ PAGE 1: DRIVE ============ -->
+    <RelativeLayout
+        android:id="@+id/page_drive"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp">
+            <TextView android:id="@+id/d_rpm" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_white" android:textSize="44sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="rpm" android:textColor="@color/hud_dim" android:textSize="12sp" android:layout_marginTop="-4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="36dp"
+            android:orientation="vertical"
+            android:gravity="right">
+            <TextView android:id="@+id/d_throttle" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_green" android:textSize="44sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="thr %" android:textColor="@color/hud_dim" android:textSize="12sp" android:layout_marginTop="-4dp" android:gravity="right" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView android:id="@+id/d_speed" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_white" android:textSize="72sp" android:textStyle="bold" android:fontFamily="sans-serif-condensed" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="mph" android:textColor="@color/hud_dim" android:textSize="16sp" android:layout_marginTop="-8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal">
+            <TextView android:id="@+id/d_coolant" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="--°F" android:textColor="@color/hud_dim" android:textSize="16sp" />
+            <TextView android:id="@+id/d_load" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="--%" android:textColor="@color/hud_dim" android:textSize="16sp" android:gravity="center" />
+            <TextView android:id="@+id/d_voltage" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="--V" android:textColor="@color/hud_dim" android:textSize="16sp" android:gravity="right" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- ============ PAGE 2: ENGINE ============ -->
+    <RelativeLayout
+        android:id="@+id/page_engine"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp">
+            <TextView android:id="@+id/e_speed" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_white" android:textSize="44sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="mph" android:textColor="@color/hud_dim" android:textSize="12sp" android:layout_marginTop="-4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="36dp"
+            android:orientation="vertical"
+            android:gravity="right">
+            <TextView android:id="@+id/e_throttle" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_green" android:textSize="44sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="thr %" android:textColor="@color/hud_dim" android:textSize="12sp" android:layout_marginTop="-4dp" android:gravity="right" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView android:id="@+id/e_rpm" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_white" android:textSize="72sp" android:textStyle="bold" android:fontFamily="sans-serif-condensed" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="rpm" android:textColor="@color/hud_dim" android:textSize="16sp" android:layout_marginTop="-8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal">
+            <TextView android:id="@+id/e_coolant" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="--°F" android:textColor="@color/hud_dim" android:textSize="14sp" />
+            <TextView android:id="@+id/e_intake" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="--°F" android:textColor="@color/hud_dim" android:textSize="14sp" android:gravity="center" />
+            <TextView android:id="@+id/e_timing" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="--°" android:textColor="@color/hud_dim" android:textSize="14sp" android:gravity="center" />
+            <TextView android:id="@+id/e_maf" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="-- g/s" android:textColor="@color/hud_dim" android:textSize="14sp" android:gravity="right" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- ============ PAGE 3: FUEL ============ -->
+    <RelativeLayout
+        android:id="@+id/page_fuel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp">
+            <TextView android:id="@+id/f_rate" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_white" android:textSize="44sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="L/h" android:textColor="@color/hud_dim" android:textSize="12sp" android:layout_marginTop="-4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="36dp"
+            android:orientation="vertical"
+            android:gravity="right">
+            <TextView android:id="@+id/f_system" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_green" android:textSize="44sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="fuel sys" android:textColor="@color/hud_dim" android:textSize="12sp" android:layout_marginTop="-4dp" android:gravity="right" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView android:id="@+id/f_level" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_white" android:textSize="72sp" android:textStyle="bold" android:fontFamily="sans-serif-condensed" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="fuel %" android:textColor="@color/hud_dim" android:textSize="16sp" android:layout_marginTop="-8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal">
+            <TextView android:id="@+id/f_pressure" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="-- kPa" android:textColor="@color/hud_dim" android:textSize="14sp" />
+            <TextView android:id="@+id/f_stft" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="ST --%" android:textColor="@color/hud_dim" android:textSize="14sp" android:gravity="center" />
+            <TextView android:id="@+id/f_ltft" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="LT --%" android:textColor="@color/hud_dim" android:textSize="14sp" android:gravity="right" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- ============ PAGE 4: DIAGNOSTICS ============ -->
+    <RelativeLayout
+        android:id="@+id/page_diag"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp">
+            <TextView android:id="@+id/g_runtime" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--:--" android:textColor="@color/hud_white" android:textSize="44sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="runtime" android:textColor="@color/hud_dim" android:textSize="12sp" android:layout_marginTop="-4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="36dp"
+            android:orientation="vertical"
+            android:gravity="right">
+            <TextView android:id="@+id/g_mil" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="MIL" android:textColor="@color/hud_dim" android:textSize="44sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="status" android:textColor="@color/hud_dim" android:textSize="12sp" android:layout_marginTop="-4dp" android:gravity="right" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView android:id="@+id/g_dtc" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="--" android:textColor="@color/hud_white" android:textSize="72sp" android:textStyle="bold" android:fontFamily="sans-serif-condensed" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="DTCs" android:textColor="@color/hud_dim" android:textSize="16sp" android:layout_marginTop="-8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal">
+            <TextView android:id="@+id/g_dist" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="-- mi" android:textColor="@color/hud_dim" android:textSize="16sp" />
+            <TextView android:id="@+id/g_voltage" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="--V" android:textColor="@color/hud_dim" android:textSize="16sp" android:gravity="right" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- ============ SHARED OVERLAY: Close button + Status + Page dots ============ -->
+
+    <TextView
+        android:id="@+id/close_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:text="[X]"
+        android:textColor="#CCFF1744"
+        android:textSize="18sp"
+        android:padding="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="#22FFFFFF" />
+
+    <!-- Bottom bar: status left, page dots center, page label right -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="2dp">
+
+        <TextView
+            android:id="@+id/status_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="SCANNING..."
+            android:textColor="@color/hud_dim"
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:id="@+id/page_dots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <TextView android:id="@+id/dot0" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="●" android:textColor="@color/hud_white" android:textSize="10sp" android:paddingLeft="4dp" android:paddingRight="4dp" />
+            <TextView android:id="@+id/dot1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="○" android:textColor="@color/hud_dim" android:textSize="10sp" android:paddingLeft="4dp" android:paddingRight="4dp" />
+            <TextView android:id="@+id/dot2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="○" android:textColor="@color/hud_dim" android:textSize="10sp" android:paddingLeft="4dp" android:paddingRight="4dp" />
+            <TextView android:id="@+id/dot3" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="○" android:textColor="@color/hud_dim" android:textSize="10sp" android:paddingLeft="4dp" android:paddingRight="4dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/page_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="DRIVE"
+            android:textColor="@color/hud_dim"
+            android:textSize="13sp"
+            android:gravity="right" />
+    </LinearLayout>
+
+</FrameLayout>

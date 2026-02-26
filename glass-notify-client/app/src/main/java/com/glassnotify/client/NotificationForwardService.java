@@ -74,6 +74,10 @@ public class NotificationForwardService extends Service {
         queue.offer(data.toBytes());
     }
 
+    public static void enqueueRaw(byte[] bytes) {
+        queue.offer(bytes);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();

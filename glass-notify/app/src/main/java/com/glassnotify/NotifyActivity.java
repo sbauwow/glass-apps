@@ -36,11 +36,16 @@ public class NotifyActivity extends Activity implements GlassServer.Listener {
     private TextView textApp;
     private TextView textTitle;
     private TextView textBody;
+    private View navigationView;
+    private TextView navInstruction;
+    private TextView navDistance;
+    private TextView navEta;
     private ScrollView historyView;
     private LinearLayout historyList;
     private TextView textStatus;
 
     private boolean showingHistory = false;
+    private boolean navigationActive = false;
     private final List<NotificationData> history = new ArrayList<>();
     private String clientAddress = null;
 
@@ -65,6 +70,10 @@ public class NotifyActivity extends Activity implements GlassServer.Listener {
         textApp = (TextView) findViewById(R.id.text_app);
         textTitle = (TextView) findViewById(R.id.text_title);
         textBody = (TextView) findViewById(R.id.text_body);
+        navigationView = findViewById(R.id.navigation_view);
+        navInstruction = (TextView) findViewById(R.id.nav_instruction);
+        navDistance = (TextView) findViewById(R.id.nav_distance);
+        navEta = (TextView) findViewById(R.id.nav_eta);
         historyView = (ScrollView) findViewById(R.id.history_view);
         historyList = (LinearLayout) findViewById(R.id.history_list);
         textStatus = (TextView) findViewById(R.id.text_status);
@@ -135,6 +144,42 @@ public class NotifyActivity extends Activity implements GlassServer.Listener {
     }
 
     @Override
+    public void onNavigationReceived(final String instruction, final String distance, final String eta, long time) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                navigationActive = true;
+                navInstruction.setText(instruction);
+                navDistance.setText(distance);
+                navEta.setText(eta);
+                if (showingHistory) {
+                    showingHistory = false;
+                    historyView.setVisibility(View.GONE);
+                }
+                notificationView.setVisibility(View.GONE);
+                navigationView.setVisibility(View.VISIBLE);
+                // Wake screen and keep it on during navigation
+                handler.removeCallbacks(dimScreen);
+                if (!wakeLock.isHeld()) wakeLock.acquire();
+            }
+        });
+    }
+
+    @Override
+    public void onNavigationEnded() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                navigationActive = false;
+                navigationView.setVisibility(View.GONE);
+                notificationView.setVisibility(View.VISIBLE);
+                handler.removeCallbacks(dimScreen);
+                handler.postDelayed(dimScreen, SCREEN_ON_DURATION_MS);
+            }
+        });
+    }
+
+    @Override
     public void onClientConnected(String address) {
         clientAddress = address;
         runOnUiThread(new Runnable() {
@@ -160,6 +205,13 @@ public class NotifyActivity extends Activity implements GlassServer.Listener {
     // --- UI ---
 
     private void showNotification(NotificationData n) {
+        // During navigation, don't switch away — just update the hidden notification view
+        if (navigationActive) {
+            textApp.setText(n.app);
+            textTitle.setText(n.title);
+            textBody.setText(n.text);
+            return;
+        }
         if (showingHistory) toggleHistory();
         textApp.setText(n.app);
         textTitle.setText(n.title);
@@ -169,7 +221,10 @@ public class NotifyActivity extends Activity implements GlassServer.Listener {
     private void wakeScreen() {
         handler.removeCallbacks(dimScreen);
         if (!wakeLock.isHeld()) wakeLock.acquire();
-        handler.postDelayed(dimScreen, SCREEN_ON_DURATION_MS);
+        // During navigation, keep screen on indefinitely
+        if (!navigationActive) {
+            handler.postDelayed(dimScreen, SCREEN_ON_DURATION_MS);
+        }
     }
 
     private void toggleHistory() {
@@ -177,10 +232,15 @@ public class NotifyActivity extends Activity implements GlassServer.Listener {
         if (showingHistory) {
             rebuildHistoryView();
             notificationView.setVisibility(View.GONE);
+            navigationView.setVisibility(View.GONE);
             historyView.setVisibility(View.VISIBLE);
         } else {
-            notificationView.setVisibility(View.VISIBLE);
             historyView.setVisibility(View.GONE);
+            if (navigationActive) {
+                navigationView.setVisibility(View.VISIBLE);
+            } else {
+                notificationView.setVisibility(View.VISIBLE);
+            }
         }
     }
 

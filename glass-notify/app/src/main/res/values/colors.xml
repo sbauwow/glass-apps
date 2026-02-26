@@ -6,4 +6,5 @@
     <color name="text_dim">#FF666666</color>
     <color name="status_connected">#FF4CAF50</color>
     <color name="status_waiting">#FFFFAB40</color>
+    <color name="nav_accent">#FF4CAF50</color>
 </resources>

@@ -13,6 +13,8 @@ public class GlassServer {
     public interface Listener {
         void onNotificationReceived(NotificationData notification);
         void onLocationReceived(double lat, double lon, double alt, float accuracy, long time);
+        void onNavigationReceived(String instruction, String distance, String eta, long time);
+        void onNavigationEnded();
         void onClientConnected(String clientAddress);
         void onClientDisconnected();
     }
@@ -85,7 +87,15 @@ public class GlassServer {
                     JSONObject obj = new JSONObject(json);
                     String type = obj.optString("type", "");
 
-                    if ("location".equals(type)) {
+                    if ("nav".equals(type)) {
+                        listener.onNavigationReceived(
+                                obj.optString("instruction", ""),
+                                obj.optString("distance", ""),
+                                obj.optString("eta", ""),
+                                obj.optLong("time", System.currentTimeMillis()));
+                    } else if ("nav_end".equals(type)) {
+                        listener.onNavigationEnded();
+                    } else if ("location".equals(type)) {
                         listener.onLocationReceived(
                                 obj.getDouble("lat"),
                                 obj.getDouble("lon"),

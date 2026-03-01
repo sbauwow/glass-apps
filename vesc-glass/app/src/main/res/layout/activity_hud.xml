@@ -84,54 +84,12 @@
         android:textSize="14sp"
         android:layout_marginBottom="4dp" />
 
-    <!-- Duty cycle bar (bottom left) -->
-    <ProgressBar
-        android:id="@+id/duty_bar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="200dp"
-        android:layout_height="8dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginBottom="8dp"
-        android:max="1000"
-        android:progress="0" />
-
-    <!-- === CENTER: DUTY CYCLE (hero metric) === -->
-    <LinearLayout
-        android:id="@+id/duty_block"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:orientation="vertical"
-        android:gravity="center">
-
-        <TextView
-            android:id="@+id/duty_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="DUTY"
-            android:textColor="@color/hud_dim"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/duty_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="--"
-            android:textColor="@color/hud_green"
-            android:textSize="72sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-condensed" />
-
-        <TextView
-            android:id="@+id/duty_unit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="%"
-            android:textColor="@color/hud_dim"
-            android:textSize="16sp"
-            android:layout_marginTop="-8dp" />
-    </LinearLayout>
+    <!-- === CENTER: DUTY CYCLE CIRCLE (hero metric) === -->
+    <com.vescglass.DutyCircleView
+        android:id="@+id/duty_circle"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_centerInParent="true" />
 
     <!-- === LEFT COLUMN: Speed === -->
     <LinearLayout
@@ -175,7 +133,7 @@
         android:id="@+id/bottom_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/duty_bar"
+        android:layout_above="@id/status_text"
         android:layout_marginBottom="8dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">

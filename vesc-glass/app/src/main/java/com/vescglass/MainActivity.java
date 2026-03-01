@@ -21,7 +21,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.List;
@@ -42,7 +41,7 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
     private Sensor orientationSensor;
 
     // HUD views
-    private TextView dutyValue;
+    private DutyCircleView dutyCircle;
     private TextView speedValue;
     private TextView battValue;
     private TextView voltageValue;
@@ -53,7 +52,6 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
     private TextView statusText;
     private TextView headingValue;
     private TextView glassBatt;
-    private ProgressBar dutyBar;
 
     // Picker overlay (shown when multiple untrusted VESCs found)
     private LinearLayout pickerOverlay;
@@ -83,7 +81,7 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_hud);
 
-        dutyValue      = (TextView)    findViewById(R.id.duty_value);
+        dutyCircle     = (DutyCircleView) findViewById(R.id.duty_circle);
         speedValue     = (TextView)    findViewById(R.id.speed_value);
         battValue      = (TextView)    findViewById(R.id.batt_value);
         voltageValue   = (TextView)    findViewById(R.id.voltage_value);
@@ -92,7 +90,6 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
         tempBattValue  = (TextView)    findViewById(R.id.temp_batt_value);
         tripValue      = (TextView)    findViewById(R.id.trip_value);
         statusText     = (TextView)    findViewById(R.id.status_text);
-        dutyBar        = (ProgressBar) findViewById(R.id.duty_bar);
         headingValue   = (TextView)    findViewById(R.id.heading_value);
         glassBatt      = (TextView)    findViewById(R.id.glass_batt);
 
@@ -240,9 +237,7 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
         hidePicker();
 
         double duty = d.dutyPct();
-        dutyValue.setText(String.format("%.0f", duty));
-        dutyValue.setTextColor(dutyColor(duty));
-        dutyBar.setProgress((int) (duty * 10));
+        dutyCircle.setDuty((float) duty, dutyColor(duty));
 
         speedValue.setText(String.format("%.0f", d.speedMph));
 
@@ -364,10 +359,12 @@ public class MainActivity extends Activity implements BleManager.Listener, Senso
 
     // ---- Color helpers ----
 
+    private static final int COLOR_CYAN = Color.parseColor("#00E5FF");
+
     private int dutyColor(double pct) {
         if (pct > 85) return COLOR_RED;
         if (pct > 70) return COLOR_YELLOW;
-        return COLOR_OK;
+        return COLOR_CYAN;
     }
 
     private int battColor(double pct) {

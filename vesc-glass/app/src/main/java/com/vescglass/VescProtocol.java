@@ -110,7 +110,7 @@ public class VescProtocol {
 
     /** Common Li-ion series cell counts. */
     private static final int[] COMMON_S_COUNTS = {
-        15, 18, 12, 14, 16, 20, 21, 24, 28, 30
+        15, 18, 20, 24, 28, 30
     };
 
     /**
